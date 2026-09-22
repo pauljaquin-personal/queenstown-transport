@@ -1,6 +1,6 @@
 import { places, modes } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js";
+import { createMap } from "./map/map.js?v=20260923-1";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
