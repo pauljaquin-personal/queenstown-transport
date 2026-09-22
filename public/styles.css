@@ -510,3 +510,9 @@ dialog label {
     scroll-behavior: auto !important;
   }
 }
+
+.route-prototype { margin: 18px 0; padding: 14px; border: 1px solid #d9e3d8; border-radius: 12px; background: #f5f8f1; }
+.route-prototype h3 { margin: 8px 0 5px; font-size: 14px; }
+.route-prototype p { margin: 5px 0 10px; font-size: 11px; }
+.route-prototype button { width: 100%; }
+#route-status { color: #35594d; font-weight: 600; }
