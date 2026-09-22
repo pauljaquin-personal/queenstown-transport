@@ -32,7 +32,51 @@ export function createMap(onStatus) {
     onStatus("Orientation landmarks · not live transport data"),
   );
   const markers = L.layerGroup().addTo(map);
-  const trails = L.geoJSON(null, {\n    style: (feature) => ({ color: feature?.properties?.OPSTAT === "02" ? "#9b4d45" : "#2f7d5b", weight: 4, opacity: 0.9, dashArray: feature?.properties?.OPSTAT === "02" ? "8 7" : null }),\n    onEachFeature(feature, layer) {\n      const p = feature.properties || {};\n      const div = document.createElement("div");\n      const strong = document.createElement("strong");\n      strong.textContent = p.TRAILNME || "QLDC cycle trail";\n      div.append(strong);\n      const details = [];\n      if (p.CYCLEGRADE) details.push("Grade: " + p.CYCLEGRADE);\n      if (p.SURFACE) details.push("Surface: " + p.SURFACE);\n      if (p.OPSTAT === "02") details.push("QLDC operating status: closed");\n      else if (p.OPSTAT === "01") details.push("QLDC operating status: open");\n      for (const text of details) div.append(document.createElement("br"), document.createTextNode(text));\n      const note = document.createElement("small");\n      note.textContent = "Source: QLDC Tracks & Trails. Operational asset data; verify conditions before riding.";\n      div.append(document.createElement("br"), note);\n      layer.bindPopup(div);\n    },\n  });\n  let trailsLoaded = false;\n  let trailsLoading;\n  async function ensureTrails() {\n    if (trailsLoaded) return true;\n    if (trailsLoading) return trailsLoading;\n    trailsLoading = (async () => {\n      try {\n        onStatus("Loading official QLDC cycle trails…");\n        const response = await fetch(QLDC_TRAILS_URL, { headers: { Accept: "application/geo+json,application/json" } });\n        if (!response.ok) throw new Error("QLDC returned " + response.status);\n        const data = await response.json();\n        if (data.error || !Array.isArray(data.features)) throw new Error("Unexpected QLDC response");\n        trails.addData(data);\n        trailsLoaded = true;\n        onStatus("QLDC cycle network · " + data.features.length + " trail segments loaded");\n        return true;\n      } catch (error) {\n        console.warn("QLDC trails unavailable", error);\n        onStatus("QLDC cycle trails are temporarily unavailable. Basemap and official links still work.");\n        return false;\n      } finally { trailsLoading = null; }\n    })();\n    return trailsLoading;\n  }\n  let location;
+  const trails = L.geoJSON(null, {
+    style: (feature) => ({ color: feature?.properties?.OPSTAT === "02" ? "#9b4d45" : "#2f7d5b", weight: 4, opacity: 0.9, dashArray: feature?.properties?.OPSTAT === "02" ? "8 7" : null }),
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      const div = document.createElement("div");
+      const strong = document.createElement("strong");
+      strong.textContent = p.TRAILNME || "QLDC cycle trail";
+      div.append(strong);
+      const details = [];
+      if (p.CYCLEGRADE) details.push("Grade: " + p.CYCLEGRADE);
+      if (p.SURFACE) details.push("Surface: " + p.SURFACE);
+      if (p.OPSTAT === "02") details.push("QLDC operating status: closed");
+      else if (p.OPSTAT === "01") details.push("QLDC operating status: open");
+      for (const text of details) div.append(document.createElement("br"), document.createTextNode(text));
+      const note = document.createElement("small");
+      note.textContent = "Source: QLDC Tracks & Trails. Operational asset data; verify conditions before riding.";
+      div.append(document.createElement("br"), note);
+      layer.bindPopup(div);
+    },
+  });
+  let trailsLoaded = false;
+  let trailsLoading;
+  async function ensureTrails() {
+    if (trailsLoaded) return true;
+    if (trailsLoading) return trailsLoading;
+    trailsLoading = (async () => {
+      try {
+        onStatus("Loading official QLDC cycle trails…");
+        const response = await fetch(QLDC_TRAILS_URL, { headers: { Accept: "application/geo+json,application/json" } });
+        if (!response.ok) throw new Error("QLDC returned " + response.status);
+        const data = await response.json();
+        if (data.error || !Array.isArray(data.features)) throw new Error("Unexpected QLDC response");
+        trails.addData(data);
+        trailsLoaded = true;
+        onStatus("QLDC cycle network · " + data.features.length + " trail segments loaded");
+        return true;
+      } catch (error) {
+        console.warn("QLDC trails unavailable", error);
+        onStatus("QLDC cycle trails are temporarily unavailable. Basemap and official links still work.");
+        return false;
+      } finally { trailsLoading = null; }
+    })();
+    return trailsLoading;
+  }
+  let location;
   function popup(title, detail) {
     const div = document.createElement("div");
     const strong = document.createElement("strong");
@@ -70,7 +114,11 @@ export function createMap(onStatus) {
             "Approximate landmark only. Check official information for services.",
           );
       }
-      if (enabled.has("cycling")) {\n        const ok = await ensureTrails();\n        if (ok && !map.hasLayer(trails)) trails.addTo(map);\n      } else if (map.hasLayer(trails)) map.removeLayer(trails);\n      if (enabled.has("community"))
+      if (enabled.has("cycling")) {
+        const ok = await ensureTrails();
+        if (ok && !map.hasLayer(trails)) trails.addTo(map);
+      } else if (map.hasLayer(trails)) map.removeLayer(trails);
+      if (enabled.has("community"))
         for (const report of reports) {
           const place = places.find((p) => p.id === report.placeId);
           if (place)
