@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260923-3"></script>
+    <script type="module" src="/src/app.js?v=20260923-4"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -65,10 +65,15 @@
             <label for="route-to">To</label>
             <select id="route-to"></select>
           </div>
+          <label for="route-variant">Route view</label>
+          <select id="route-variant">
+            <option value="detour">2026 detour — partial map</option>
+            <option value="normal">Normal trail — closed sections</option>
+          </select>
           <button id="test-cycle-route" type="button">Show route</button>
-          <p id="route-status" role="status">Queenstown ↔ Frankton only. The normal trail alignment includes closed sections; the current detour is not mapped.</p>
+          <p id="route-status" role="status">Queenstown ↔ Frankton only. The detour map has a gap at the Perkins Road works and stops at the roadside path near Frankton Beach. Follow current signs.</p>
           <a href="https://www.queenstowntrails.org.nz/maps-and-trails/all-trails/frankton-track/" target="_blank" rel="noopener noreferrer">Current Frankton Track detour and notices ↗</a>
-          <small>Route geometry: Queenstown Lakes District Council; connectors © OpenStreetMap contributors, ODbL.</small>
+          <small>Normal trail: QLDC. Detour/path geometry: © OpenStreetMap contributors, ODbL.</small>
         </section>
         <div class="notice">
           <span class="status-dot"></span>
