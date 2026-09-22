@@ -5,6 +5,19 @@ const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
 let deferredInstall;
+const ROUTE_PLACES = [
+  ["queenstown", "Queenstown", 168.6626, -45.0328],
+  ["fernhill", "Fernhill", 168.6387, -45.0380],
+  ["frankton", "Frankton", 168.7447, -45.0182],
+  ["hanleys-farm", "Hanley’s Farm", 168.7348, -45.0838],
+  ["jacks-point", "Jack’s Point", 168.7385, -45.0895],
+  ["kelvin-heights", "Kelvin Heights", 168.7035, -45.0500],
+  ["arthurs-point", "Arthurs Point", 168.6845, -44.9820],
+  ["shotover-country", "Shotover Country", 168.7900, -44.9970],
+  ["lake-hayes-estate", "Lake Hayes Estate", 168.8140, -44.9990],
+  ["arrowtown", "Arrowtown", 168.8350, -44.9380],
+];
+
 const TEST_CYCLE_ROUTE = {
   type: "Feature",
   properties: { name: "Queenstown Gardens to Frankton Beach prototype" },
@@ -19,6 +32,16 @@ const TEST_CYCLE_ROUTE = {
 };
 
 const map = createMap((text) => ($("#map-status").textContent = text));
+for (const [id, name] of ROUTE_PLACES) {
+  for (const selector of ["#route-from", "#route-to"]) {
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = name;
+    $(selector).append(option);
+  }
+}
+$("#route-from").value = "queenstown";
+$("#route-to").value = "frankton";
 function toast(text) {
   $("#toast").textContent = text;
   clearTimeout(toast.timer);
@@ -127,8 +150,28 @@ function render() {
   container.append(card);
 }
 $("#test-cycle-route").onclick = () => {
-  map.showCycleRoute(TEST_CYCLE_ROUTE);
-  $("#route-status").textContent = "Prototype corridor shown. Not turn-by-turn navigation; check the signed 2026 Frankton Track detour before riding.";
+  const from = $("#route-from").value;
+  const to = $("#route-to").value;
+  if (from === to) {
+    map.showCycleRoute(null);
+    $("#route-status").textContent = "Choose two different places.";
+    return;
+  }
+  const isTestCorridor =
+    (from === "queenstown" && to === "frankton") ||
+    (from === "frankton" && to === "queenstown");
+  if (!isTestCorridor) {
+    map.showCycleRoute(null);
+    const fromName = ROUTE_PLACES.find(([id]) => id === from)?.[1];
+    const toName = ROUTE_PLACES.find(([id]) => id === to)?.[1];
+    $("#route-status").textContent = `${fromName} → ${toName} is ready for the routing graph, but no route is calculated yet.`;
+    return;
+  }
+  const route = from === "queenstown"
+    ? TEST_CYCLE_ROUTE
+    : { ...TEST_CYCLE_ROUTE, geometry: { ...TEST_CYCLE_ROUTE.geometry, coordinates: [...TEST_CYCLE_ROUTE.geometry.coordinates].reverse() } };
+  map.showCycleRoute(route);
+  $("#route-status").textContent = "Prototype Queenstown–Frankton corridor shown. Not turn-by-turn navigation; verify current trail detours before riding.";
   enabled.add("cycling");
   selected = "cycling";
   render();
