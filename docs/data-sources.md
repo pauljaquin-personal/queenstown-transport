@@ -1,6 +1,6 @@
 # Cycling integration update — 23 September 2026
 
-The earlier v0.1 register below is historical. The app now displays live QLDC trails and a locally packaged Queenstown–Frankton normal alignment. See [verified route sources and limitations](frankton-route.md), including closed sections, OSM connectors and the unmapped 2026 detour.
+The earlier v0.1 register below is historical. The app now displays live QLDC trails and a locally packaged Queenstown–Frankton normal alignment. See [verified route sources and limitations](frankton-route.md), including closed sections and OSM connectors. A [partial 2026 detour view](frankton-detour.md) now maps the supported roadside sections while explicitly leaving the works and beach-access connections unresolved.
 
 # Source register — checked 22 September 2026
 

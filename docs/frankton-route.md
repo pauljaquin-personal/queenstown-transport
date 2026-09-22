@@ -1,4 +1,6 @@
-# Queenstown ↔ Frankton route
+# Queenstown ↔ Frankton normal route
+
+The app now also offers a [partial 2026 detour view](frankton-detour.md). This document describes the preserved normal alignment. Current shell cache: v01-7; entrypoint version: 20260923-4.
 
 Verified 23 September 2026. This is the **normal Frankton Track alignment**, not an open route recommendation or a mapped 2026 diversion. All eleven selected QLDC segments currently have OPSTAT `02` (Closed). The app preserves these flags, draws them red/dashed, and links current detour advice. Do not remove that warning without refreshed evidence.
 

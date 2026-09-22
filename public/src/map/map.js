@@ -134,9 +134,13 @@ export function createMap(onStatus) {
     showCycleRoute(geojson) {
       if (!cycleRoute && !geojson) return;
       if (!cycleRoute) cycleRoute = L.geoJSON(null, {
-        style: feature => ({ color: feature.properties.closed ? "#b83232" : "#236bb0", weight: 7, opacity: 0.95, dashArray: feature.properties.closed ? "10 8" : null }),
+        style: feature => ({
+          color: feature.properties.closed ? "#b83232" : feature.properties.kind === "walk-bike" ? "#7b4190" : feature.properties.kind === "detour" ? "#bd5900" : "#236bb0",
+          weight: 7, opacity: 0.95,
+          dashArray: feature.properties.closed || feature.properties.kind === "walk-bike" ? "10 8" : null,
+        }),
         onEachFeature(feature, layer) {
-          layer.bindPopup(popup(feature.properties.name, `${feature.properties.source} · ${feature.properties.closed ? "Closed — normal alignment only" : "Connector — check current conditions"}`));
+          layer.bindPopup(popup(feature.properties.name, `${feature.properties.source} · ${feature.properties.closed ? "Closed — normal alignment only" : feature.properties.kind === "walk-bike" ? "Walk your bike on this footpath / crossing" : feature.properties.kind === "detour" ? "Mapped path — follow temporary signs and dismount where instructed" : "Connector — check current conditions"}`));
         },
       });
       cycleRoute.clearLayers();
@@ -153,6 +157,13 @@ export function createMap(onStatus) {
         L.circleMarker([point[1], point[0]], { radius: 7, color: "#173f36", fillColor: "#fff", fillOpacity: 1 })
           .bindPopup(popup(name, "Mapped route endpoint"))
           .addTo(cycleRoute);
+      }
+      for (const gap of geojson.metadata.gaps || []) {
+        for (const point of [gap.from, gap.to]) {
+          L.circleMarker([point[1], point[0]], { radius: 9, color: "#bd5900", fillColor: "#fff", fillOpacity: 1, weight: 4 })
+            .bindPopup(popup("Unmapped works section", gap.label))
+            .addTo(cycleRoute);
+        }
       }
       if (!map.hasLayer(cycleRoute)) cycleRoute.addTo(map);
       const bounds = cycleRoute.getBounds();

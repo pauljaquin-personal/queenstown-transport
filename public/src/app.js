@@ -1,6 +1,6 @@
 import { places, modes } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260923-3";
+import { createMap } from "./map/map.js?v=20260923-4";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
@@ -144,10 +144,12 @@ function clearRoute() {
 }
 $("#route-from").onchange = clearRoute;
 $("#route-to").onchange = clearRoute;
+$("#route-variant").onchange = clearRoute;
 $("#test-cycle-route").onclick = async () => {
   const request = ++routeRequest;
   const from = $("#route-from").value;
   const to = $("#route-to").value;
+  const variant = $("#route-variant").value;
   map.showCycleRoute(null);
   if (from === to) {
     $("#route-status").textContent = "Choose two different places.";
@@ -159,11 +161,14 @@ $("#test-cycle-route").onclick = async () => {
   }
   $("#route-status").textContent = "Loading verified route geometry…";
   try {
-    const { loadRoute } = await import("./routing/frankton.js?v=20260923-3");
-    const route = await loadRoute(from, to);
+    const { loadRoute } = await import("./routing/frankton.js?v=20260923-4");
+    const route = await loadRoute(from, to, undefined, variant);
     if (request !== routeRequest) return;
     map.showCycleRoute(route);
-    $("#route-status").textContent = `${route.metadata.start} → ${route.metadata.end} · ${(route.metadata.distanceMetres / 1000).toFixed(1)} km. ${route.metadata.notice} Red dashed sections: closed. Blue: OSM connections. Geometry checked ${route.metadata.verifiedAt}.`;
+    const detour = variant === "detour";
+    const legend = detour ? "Orange: mapped detour. Purple dashed: walk your bike. Gaps are not connected." : "Red dashed: closed. Blue: connections.";
+    const dated = detour && new Date().toISOString().slice(0,10) >= route.metadata.reviewAfter ? " Detour snapshot needs rechecking; the planned works period has ended." : "";
+    $("#route-status").textContent = `${route.metadata.start} → ${route.metadata.end} · ${(route.metadata.distanceMetres / 1000).toFixed(1)} km${detour ? " mapped (excludes gaps)" : ""}. ${route.metadata.notice} ${legend} Sources checked ${route.metadata.verifiedAt}.${dated}`;
   } catch (error) {
     if (request !== routeRequest) return;
     console.warn("Cycle route unavailable", error);

@@ -39,3 +39,36 @@ test('loader handles HTTP, network and invalid payload failures; successful retr
   assert.ok(options.signal);return {ok:true,json:async()=>data};
  });assert.equal(route.features.length,16);
 });
+const detourUrl=new URL('../public/data/queenstown-frankton-detour.v1.json',import.meta.url);
+const detour=JSON.parse(readFileSync(detourUrl));
+test('detour preserves the works gap and reverses fragments and gap endpoints',()=>{
+ const forward=routeFor(detour,'queenstown','frankton','detour');
+ const reverse=routeFor(detour,'frankton','queenstown','detour');
+ assert.equal(forward.metadata.status,'partial');
+ assert.equal(forward.features.length,31);
+ assert.ok(forward.metadata.distanceMetres>5000 && forward.metadata.distanceMetres<5100);
+ assert.deepEqual(reverse.metadata.gaps[0].from,forward.metadata.gaps[0].to);
+ assert.equal(reverse.metadata.gaps[0].beforeId,forward.metadata.gaps[0].afterId);
+ assert.deepEqual(reverse.features[0].geometry.coordinates[0],forward.features.at(-1).geometry.coordinates.at(-1));
+ assert.ok(forward.features.every(f=>!f.properties.closed && f.properties.id!==1484179810));
+ assert.ok(forward.features.some(f=>f.properties.kind==='walk-bike'));
+ assert.match(forward.metadata.end,/access unmapped/);
+});
+test('detour refuses invented gaps, closed track substitutes and wrong variants',()=>{
+ const bad=structuredClone(detour);bad.metadata.gaps=[];
+ assert.throws(()=>routeFor(bad,'queenstown','frankton','detour'),/gap/);
+ const disconnected=structuredClone(detour);disconnected.features[1].geometry.coordinates[0]=[168.70,-45.02];
+ assert.throws(()=>routeFor(disconnected,'queenstown','frankton','detour'),/Disconnected/);
+ const closed=structuredClone(detour);closed.features[0].properties.closed=true;
+ assert.throws(()=>routeFor(closed,'queenstown','frankton','detour'),/Unverified/);
+ assert.throws(()=>routeFor(detour,'queenstown','frankton','normal'),/Invalid/);
+ assert.throws(()=>routeFor(detour,'queenstown','frankton','unknown'),/Unsupported/);
+});
+test('detour rebuild is reproducible and loader selects only the local detour snapshot',async()=>{
+ const before=readFileSync(detourUrl,'utf8');
+ execFileSync(process.execPath,['scripts/build-frankton-detour.js']);assert.equal(readFileSync(detourUrl,'utf8'),before);
+ const loaded=await loadRoute('queenstown','frankton',async url=>{
+  assert.ok(url.pathname.endsWith('/queenstown-frankton-detour.v1.json'));
+  return {ok:true,json:async()=>detour};
+ },'detour');assert.equal(loaded.metadata.status,'partial');
+});
