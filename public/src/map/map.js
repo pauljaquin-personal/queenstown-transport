@@ -32,10 +32,6 @@ export function createMap(onStatus) {
     onStatus("Orientation landmarks · not live transport data"),
   );
   const markers = L.layerGroup().addTo(map);
-  const roadNetwork = L.geoJSON(null, {
-    style: { color: "#7f8580", weight: 2, opacity: 0.45 },
-    interactive: false,
-  });
   const trails = L.geoJSON(null, {
     style: (feature) => ({ color: feature?.properties?.OPSTAT === "02" ? "#9b4d45" : "#2f7d5b", weight: 4, opacity: 0.9, dashArray: feature?.properties?.OPSTAT === "02" ? "8 7" : null }),
     onEachFeature(feature, layer) {
@@ -56,23 +52,6 @@ export function createMap(onStatus) {
       layer.bindPopup(div);
     },
   });
-  let roadNetworkLoaded = false;
-  async function ensureRoadNetwork() {
-    if (roadNetworkLoaded) return true;
-    try {
-      const query = `[out:json][timeout:25];(way[highway][bicycle!="no"](-45.15,168.55,-44.85,168.95););out geom;`;
-      const response = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));
-      if (!response.ok) throw new Error("OSM returned " + response.status);
-      const data = await response.json();
-      const features = (data.elements || []).filter((e) => e.type === "way" && Array.isArray(e.geometry)).map((e) => ({ type: "Feature", properties: { osmId: e.id, highway: e.tags?.highway, name: e.tags?.name || null, surface: e.tags?.surface || null, bicycle: e.tags?.bicycle || null }, geometry: { type: "LineString", coordinates: e.geometry.map((p) => [p.lon, p.lat]) } }));
-      roadNetwork.addData({ type: "FeatureCollection", features });
-      roadNetworkLoaded = true;
-      return true;
-    } catch (error) {
-      console.warn("OSM cycling network unavailable", error);
-      return false;
-    }
-  }
   let trailsLoaded = false;
   let trailsLoading;
   async function ensureTrails() {
@@ -97,7 +76,7 @@ export function createMap(onStatus) {
     })();
     return trailsLoading;
   }
-  let location;
+  const cycleRoute = L.geoJSON(null, {\n    style: { color: \"#173f36\", weight: 7, opacity: 0.9, dashArray: \"12 8\" },\n    interactive: false,\n  });\n  let location;
   function popup(title, detail) {
     const div = document.createElement("div");
     const strong = document.createElement("strong");
@@ -150,7 +129,7 @@ export function createMap(onStatus) {
             );
         }
     },
-    focus(place) {
+    showCycleRoute(geojson) {\n      cycleRoute.clearLayers();\n      if (!geojson) {\n        if (map.hasLayer(cycleRoute)) map.removeLayer(cycleRoute);\n        return;\n      }\n      cycleRoute.addData(geojson);\n      if (!map.hasLayer(cycleRoute)) cycleRoute.addTo(map);\n      const bounds = cycleRoute.getBounds();\n      if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32] });\n    },\n    focus(place) {
       map.setView([place.lat, place.lng], 15);
       L.popup()
         .setLatLng([place.lat, place.lng])
