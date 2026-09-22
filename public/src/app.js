@@ -5,6 +5,19 @@ const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
 let deferredInstall;
+const TEST_CYCLE_ROUTE = {
+  type: "Feature",
+  properties: { name: "Queenstown Gardens to Frankton Beach prototype" },
+  geometry: {
+    type: "LineString",
+    coordinates: [
+      [168.6626, -45.0328], [168.6702, -45.0314], [168.6795, -45.0291],
+      [168.6900, -45.0270], [168.7015, -45.0245], [168.7130, -45.0220],
+      [168.7240, -45.0204], [168.7350, -45.0190], [168.7447, -45.0182]
+    ]
+  }
+};
+
 const map = createMap((text) => ($("#map-status").textContent = text));
 function toast(text) {
   $("#toast").textContent = text;
@@ -113,6 +126,13 @@ function render() {
   }
   container.append(card);
 }
+$("#test-cycle-route").onclick = () => {
+  map.showCycleRoute(TEST_CYCLE_ROUTE);
+  $("#route-status").textContent = "Prototype corridor shown. Not turn-by-turn navigation; check the signed 2026 Frankton Track detour before riding.";
+  enabled.add("cycling");
+  selected = "cycling";
+  render();
+};
 $("#place").onchange = (event) => {
   const place = places.find((p) => p.id === event.target.value);
   if (place) map.focus(place);
