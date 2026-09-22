@@ -1,6 +1,6 @@
 import { places, modes } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260923-1";
+import { createMap } from "./map/map.js?v=20260923-3";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
@@ -17,19 +17,6 @@ const ROUTE_PLACES = [
   ["lake-hayes-estate", "Lake Hayes Estate", 168.8140, -44.9990],
   ["arrowtown", "Arrowtown", 168.8350, -44.9380],
 ];
-
-const TEST_CYCLE_ROUTE = {
-  type: "Feature",
-  properties: { name: "Queenstown Gardens to Frankton Beach prototype" },
-  geometry: {
-    type: "LineString",
-    coordinates: [
-      [168.6626, -45.0328], [168.6702, -45.0314], [168.6795, -45.0291],
-      [168.6900, -45.0270], [168.7015, -45.0245], [168.7130, -45.0220],
-      [168.7240, -45.0204], [168.7350, -45.0190], [168.7447, -45.0182]
-    ]
-  }
-};
 
 const map = createMap((text) => ($("#map-status").textContent = text));
 for (const [id, name] of ROUTE_PLACES) {
@@ -149,32 +136,40 @@ function render() {
   }
   container.append(card);
 }
-$("#test-cycle-route").onclick = () => {
+let routeRequest = 0;
+function clearRoute() {
+  routeRequest++;
+  map.showCycleRoute(null);
+  $("#route-status").textContent = "Choose Show route to display the selected journey.";
+}
+$("#route-from").onchange = clearRoute;
+$("#route-to").onchange = clearRoute;
+$("#test-cycle-route").onclick = async () => {
+  const request = ++routeRequest;
   const from = $("#route-from").value;
   const to = $("#route-to").value;
+  map.showCycleRoute(null);
   if (from === to) {
-    map.showCycleRoute(null);
     $("#route-status").textContent = "Choose two different places.";
     return;
   }
-  const isTestCorridor =
-    (from === "queenstown" && to === "frankton") ||
-    (from === "frankton" && to === "queenstown");
-  if (!isTestCorridor) {
-    map.showCycleRoute(null);
-    const fromName = ROUTE_PLACES.find(([id]) => id === from)?.[1];
-    const toName = ROUTE_PLACES.find(([id]) => id === to)?.[1];
-    $("#route-status").textContent = `${fromName} → ${toName} is ready for the routing graph, but no route is calculated yet.`;
+  if (!((from === "queenstown" && to === "frankton") || (from === "frankton" && to === "queenstown"))) {
+    $("#route-status").textContent = "Only Queenstown ↔ Frankton is mapped so far.";
     return;
   }
-  const route = from === "queenstown"
-    ? TEST_CYCLE_ROUTE
-    : { ...TEST_CYCLE_ROUTE, geometry: { ...TEST_CYCLE_ROUTE.geometry, coordinates: [...TEST_CYCLE_ROUTE.geometry.coordinates].reverse() } };
-  map.showCycleRoute(route);
-  $("#route-status").textContent = "Prototype Queenstown–Frankton corridor shown. Not turn-by-turn navigation; verify current trail detours before riding.";
-  enabled.add("cycling");
-  selected = "cycling";
-  render();
+  $("#route-status").textContent = "Loading verified route geometry…";
+  try {
+    const { loadRoute } = await import("./routing/frankton.js?v=20260923-3");
+    const route = await loadRoute(from, to);
+    if (request !== routeRequest) return;
+    map.showCycleRoute(route);
+    $("#route-status").textContent = `${route.metadata.start} → ${route.metadata.end} · ${(route.metadata.distanceMetres / 1000).toFixed(1)} km. ${route.metadata.notice} Red dashed sections: closed. Blue: OSM connections. Geometry checked ${route.metadata.verifiedAt}.`;
+  } catch (error) {
+    if (request !== routeRequest) return;
+    console.warn("Cycle route unavailable", error);
+    map.showCycleRoute(null);
+    $("#route-status").textContent = "Cycle route unavailable. The map and From/To controls still work. Try again.";
+  }
 };
 $("#place").onchange = (event) => {
   const place = places.find((p) => p.id === event.target.value);

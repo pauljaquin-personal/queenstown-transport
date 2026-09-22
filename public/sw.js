@@ -1,12 +1,12 @@
-const CACHE = "queenstown-shell-v01-5";
+const CACHE = "queenstown-shell-v01-6";
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
-  "/src/app.js",
+  "/src/app.js?v=20260923-3",
   "/src/api/catalog.js",
   "/src/api/reports.js",
-  "/src/map/map.js",
+  "/src/map/map.js?v=20260923-3",
   "/vendor/leaflet.js",
   "/vendor/leaflet.css",
   "/manifest.webmanifest",
@@ -14,6 +14,8 @@ const SHELL = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
+// Optional route assets must never prevent installing the map shell.
+const OPTIONAL = ["/src/routing/frankton.js?v=20260923-3", "/data/queenstown-frankton.v1.json"];
 self.addEventListener("install", (event) =>
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))),
 );
@@ -39,7 +41,7 @@ self.addEventListener("fetch", (event) => {
   if (
     event.request.method !== "GET" ||
     url.origin !== self.location.origin ||
-    !SHELL.includes(url.pathname)
+    ![...SHELL, ...OPTIONAL].includes(url.pathname + url.search)
   )
     return;
   event.respondWith(
