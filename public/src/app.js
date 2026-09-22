@@ -2,7 +2,7 @@ import { places, modes } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
 import { createMap } from "./map/map.js";
 const $ = (s) => document.querySelector(s);
-const enabled = new Set(["buses", "ferries"]);
+const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
 let deferredInstall;
 const map = createMap((text) => ($("#map-status").textContent = text));
