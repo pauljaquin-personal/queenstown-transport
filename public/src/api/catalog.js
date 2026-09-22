@@ -114,10 +114,10 @@ export const modes = [
     color: "#54856d",
     tint: "#e9f3ec",
     subtitle: "Trails & connections",
-    status: "OFFICIAL LINKS",
-    title: "A different pace",
+    status: "QLDC TRAILS",
+    title: "Ride the trail network",
     description:
-      "Find trail information and current notices from Queenstown Trails. A verified cycling network is not loaded yet; map landmarks are not route or safety advice.",
+      "Official QLDC cycle-designated Tracks & Trails are shown on the map. This is operational asset data with variable spatial accuracy, not turn-by-turn navigation or safety advice.",
     links: [["Queenstown Trails", "https://www.queenstowntrails.co.nz/"]],
   },
   {
