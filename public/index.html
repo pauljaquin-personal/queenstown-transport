@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260923-1"></script>
+    <script type="module" src="/src/app.js?v=20260923-2"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -58,10 +58,15 @@
         </select>
         <section class="route-prototype" aria-labelledby="cycle-route-title">
           <span class="eyebrow">CYCLE ROUTE PROTOTYPE</span>
-          <h3 id="cycle-route-title">Queenstown Gardens → Frankton Beach</h3>
-          <p>Test the routing interface against the official Frankton Track corridor. Current 2026 detours are not automatically routed yet.</p>
-          <button id="test-cycle-route" type="button">Show test route</button>
-          <p id="route-status" role="status"></p>
+          <h3 id="cycle-route-title">Plan a cycle journey</h3>
+          <div class="route-fields">
+            <label for="route-from">From</label>
+            <select id="route-from"></select>
+            <label for="route-to">To</label>
+            <select id="route-to"></select>
+          </div>
+          <button id="test-cycle-route" type="button">Show route</button>
+          <p id="route-status" role="status">Route calculation is currently enabled for the Queenstown–Frankton test corridor only.</p>
         </section>
         <div class="notice">
           <span class="status-dot"></span>
