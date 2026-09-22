@@ -6,6 +6,7 @@ export function createMap(onStatus) {
     onStatus("Map unavailable. Use the transport links below.");
     return {
       render() {},
+      showCycleRoute() {},
       focus() {},
       reset() {},
       locate() {
@@ -76,10 +77,7 @@ export function createMap(onStatus) {
     })();
     return trailsLoading;
   }
-  const cycleRoute = L.geoJSON(null, {
-    style: { color: "#173f36", weight: 7, opacity: 0.9, dashArray: "12 8" },
-    interactive: false,
-  });
+  let cycleRoute;
   let location;
   function popup(title, detail) {
     const div = document.createElement("div");
@@ -134,12 +132,28 @@ export function createMap(onStatus) {
         }
     },
     showCycleRoute(geojson) {
+      if (!cycleRoute && !geojson) return;
+      if (!cycleRoute) cycleRoute = L.geoJSON(null, {
+        style: feature => ({ color: feature.properties.closed ? "#b83232" : "#236bb0", weight: 7, opacity: 0.95, dashArray: feature.properties.closed ? "10 8" : null }),
+        onEachFeature(feature, layer) {
+          layer.bindPopup(popup(feature.properties.name, `${feature.properties.source} · ${feature.properties.closed ? "Closed — normal alignment only" : "Connector — check current conditions"}`));
+        },
+      });
       cycleRoute.clearLayers();
       if (!geojson) {
         if (map.hasLayer(cycleRoute)) map.removeLayer(cycleRoute);
         return;
       }
       cycleRoute.addData(geojson);
+      const endpoints = [
+        [geojson.features[0].geometry.coordinates[0], geojson.metadata.start],
+        [geojson.features.at(-1).geometry.coordinates.at(-1), geojson.metadata.end],
+      ];
+      for (const [point, name] of endpoints) {
+        L.circleMarker([point[1], point[0]], { radius: 7, color: "#173f36", fillColor: "#fff", fillOpacity: 1 })
+          .bindPopup(popup(name, "Mapped route endpoint"))
+          .addTo(cycleRoute);
+      }
       if (!map.hasLayer(cycleRoute)) cycleRoute.addTo(map);
       const bounds = cycleRoute.getBounds();
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32] });

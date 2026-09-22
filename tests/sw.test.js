@@ -44,7 +44,7 @@ test("offline shell dependencies exist and external map tiles are excluded", asy
     assert.ok(
       existsSync(
         new URL(
-          "../public" + (path === "/" ? "/index.html" : path),
+          "../public" + (path === "/" ? "/index.html" : path.split("?")[0]),
           import.meta.url,
         ),
       ),
@@ -74,4 +74,16 @@ test("network failure falls back to cached shell", async () => {
     respondWith: (p) => (promise = p),
   });
   assert.equal(await promise, h.cached);
+});
+test('versioned entry points are precached exactly; routing remains optional', async () => {
+  const h=harness(async()=>({ok:false}));let promise;
+  h.handlers.install({waitUntil:p=>promise=p});await promise;
+  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+  const app=readFileSync(new URL('../public/src/app.js',import.meta.url),'utf8');
+  assert.ok(h.shell.includes(html.match(/src="(\/src\/app.js[^\"]+)"/)[1]));
+  assert.ok(h.shell.includes('/src/'+app.match(/from "\.\/(map\/map.js[^\"]+)"/)[1]));
+  assert.ok(!h.shell.some(p=>p.includes('routing') || p.includes('/data/')));
+  let intercepted=false;
+  h.handlers.fetch({request:{url:'https://qt.test/data/queenstown-frankton.v1.json',method:'GET'},respondWith(){intercepted=true;},waitUntil(){}});
+  assert.ok(intercepted);
 });

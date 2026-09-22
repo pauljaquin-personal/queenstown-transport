@@ -1,0 +1,229 @@
+{
+  "name": "Tracks_and_Trails",
+  "fields": [
+    {
+      "name": "OBJECTID",
+      "type": "esriFieldTypeOID",
+      "alias": "OBJECTID",
+      "domain": null
+    },
+    {
+      "name": "TRAILNME",
+      "type": "esriFieldTypeString",
+      "alias": "Trail Name",
+      "length": 150,
+      "domain": null
+    },
+    {
+      "name": "CYCLEGRADE",
+      "type": "esriFieldTypeString",
+      "alias": "Cycle Grade",
+      "length": 25,
+      "domain": {
+        "type": "codedValue",
+        "name": "cycle_grade",
+        "description": "Cycle Grade",
+        "codedValues": [
+          {
+            "name": "Grade 1 - Easiest - Cycle Trail",
+            "code": "01"
+          },
+          {
+            "name": "Grade 2 - Easy - Cycle Trail",
+            "code": "02"
+          },
+          {
+            "name": "Grade 3 - Intermediate - Cycle Trail",
+            "code": "03"
+          },
+          {
+            "name": "Grade 4 - Advanced - MTB Track",
+            "code": "04"
+          },
+          {
+            "name": "Grade 5 - Expert - MTB Track",
+            "code": "05"
+          },
+          {
+            "name": "Grade 6 - Extreme - MTB Track",
+            "code": "06"
+          },
+          {
+            "name": "N/A - Walking Track",
+            "code": "07"
+          }
+        ],
+        "mergePolicy": "esriMPTDefaultValue",
+        "splitPolicy": "esriSPTDuplicate"
+      }
+    },
+    {
+      "name": "SURFACE",
+      "type": "esriFieldTypeString",
+      "alias": "Surface Material",
+      "length": 255,
+      "domain": {
+        "type": "codedValue",
+        "name": "track_surface",
+        "description": "Track Surface Material",
+        "codedValues": [
+          {
+            "name": "Asphaltic concrete (black)",
+            "code": "01"
+          },
+          {
+            "name": "Asphaltic concrete (red)",
+            "code": "02"
+          },
+          {
+            "name": "Concrete",
+            "code": "03"
+          },
+          {
+            "name": "Concrete (black)",
+            "code": "04"
+          },
+          {
+            "name": "Concrete (red)",
+            "code": "05"
+          },
+          {
+            "name": "Concrete blocks",
+            "code": "06"
+          },
+          {
+            "name": "Cobble Stone",
+            "code": "07"
+          },
+          {
+            "name": "Interlocking blocks",
+            "code": "08"
+          },
+          {
+            "name": "Metalled",
+            "code": "09"
+          },
+          {
+            "name": "Natural",
+            "code": "10"
+          },
+          {
+            "name": "Paving slabs",
+            "code": "11"
+          },
+          {
+            "name": "Sealed - no further detail",
+            "code": "12"
+          },
+          {
+            "name": "Slurry Seal",
+            "code": "13"
+          },
+          {
+            "name": "Stone",
+            "code": "14"
+          },
+          {
+            "name": "Timber",
+            "code": "15"
+          },
+          {
+            "name": "Tactile Pavers",
+            "code": "16"
+          },
+          {
+            "name": "Tactile Pavers - Drilled",
+            "code": "17"
+          },
+          {
+            "name": "Unsealed - no further detail",
+            "code": "18"
+          },
+          {
+            "name": "Other",
+            "code": "97"
+          }
+        ],
+        "mergePolicy": "esriMPTDefaultValue",
+        "splitPolicy": "esriSPTDuplicate"
+      }
+    },
+    {
+      "name": "CYCLE",
+      "type": "esriFieldTypeString",
+      "alias": "Cycle Route",
+      "length": 15,
+      "domain": {
+        "type": "codedValue",
+        "name": "yes_no",
+        "description": "Yes / No",
+        "codedValues": [
+          {
+            "name": "Yes",
+            "code": "01"
+          },
+          {
+            "name": "No",
+            "code": "02"
+          }
+        ],
+        "mergePolicy": "esriMPTDefaultValue",
+        "splitPolicy": "esriSPTDuplicate"
+      }
+    },
+    {
+      "name": "ASSTAT",
+      "type": "esriFieldTypeString",
+      "alias": "Asset Status",
+      "length": 15,
+      "domain": {
+        "type": "codedValue",
+        "name": "asset_status",
+        "description": "Asset Status",
+        "codedValues": [
+          {
+            "name": "Abandoned or Disused",
+            "code": "01"
+          },
+          {
+            "name": "In Use",
+            "code": "02"
+          },
+          {
+            "name": "Removed",
+            "code": "03"
+          },
+          {
+            "name": "To Be Determined",
+            "code": "04"
+          }
+        ],
+        "mergePolicy": "esriMPTDefaultValue",
+        "splitPolicy": "esriSPTDefaultValue"
+      }
+    },
+    {
+      "name": "OPSTAT",
+      "type": "esriFieldTypeString",
+      "alias": "Operating Status",
+      "length": 255,
+      "domain": {
+        "type": "codedValue",
+        "name": "operating_status_03",
+        "description": "Asset operational status",
+        "codedValues": [
+          {
+            "name": "Open",
+            "code": "01"
+          },
+          {
+            "name": "Closed",
+            "code": "02"
+          }
+        ],
+        "mergePolicy": "esriMPTDefaultValue",
+        "splitPolicy": "esriSPTDefaultValue"
+      }
+    }
+  ]
+}
