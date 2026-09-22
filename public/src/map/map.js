@@ -32,7 +32,11 @@ export function createMap(onStatus) {
     onStatus("Orientation landmarks · not live transport data"),
   );
   const markers = L.layerGroup().addTo(map);
-  const roadNetwork = L.geoJSON(null, {\n    style: { color: "#7f8580", weight: 2, opacity: 0.45 },\n    interactive: false,\n  });\n  const trails = L.geoJSON(null, {
+  const roadNetwork = L.geoJSON(null, {
+    style: { color: "#7f8580", weight: 2, opacity: 0.45 },
+    interactive: false,
+  });
+  const trails = L.geoJSON(null, {
     style: (feature) => ({ color: feature?.properties?.OPSTAT === "02" ? "#9b4d45" : "#2f7d5b", weight: 4, opacity: 0.9, dashArray: feature?.properties?.OPSTAT === "02" ? "8 7" : null }),
     onEachFeature(feature, layer) {
       const p = feature.properties || {};
@@ -52,7 +56,24 @@ export function createMap(onStatus) {
       layer.bindPopup(div);
     },
   });
-  let roadNetworkLoaded = false;\n  async function ensureRoadNetwork() {\n    if (roadNetworkLoaded) return true;\n    try {\n      const query = `[out:json][timeout:25];(way[highway][bicycle!="no"](-45.15,168.55,-44.85,168.95););out geom;`;\n      const response = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));\n      if (!response.ok) throw new Error("OSM returned " + response.status);\n      const data = await response.json();\n      const features = (data.elements || []).filter((e) => e.type === "way" && Array.isArray(e.geometry)).map((e) => ({ type: "Feature", properties: { osmId: e.id, highway: e.tags?.highway, name: e.tags?.name || null, surface: e.tags?.surface || null, bicycle: e.tags?.bicycle || null }, geometry: { type: "LineString", coordinates: e.geometry.map((p) => [p.lon, p.lat]) } }));\n      roadNetwork.addData({ type: "FeatureCollection", features });\n      roadNetworkLoaded = true;\n      return true;\n    } catch (error) {\n      console.warn("OSM cycling network unavailable", error);\n      return false;\n    }\n  }\n  let trailsLoaded = false;
+  let roadNetworkLoaded = false;
+  async function ensureRoadNetwork() {
+    if (roadNetworkLoaded) return true;
+    try {
+      const query = `[out:json][timeout:25];(way[highway][bicycle!="no"](-45.15,168.55,-44.85,168.95););out geom;`;
+      const response = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));
+      if (!response.ok) throw new Error("OSM returned " + response.status);
+      const data = await response.json();
+      const features = (data.elements || []).filter((e) => e.type === "way" && Array.isArray(e.geometry)).map((e) => ({ type: "Feature", properties: { osmId: e.id, highway: e.tags?.highway, name: e.tags?.name || null, surface: e.tags?.surface || null, bicycle: e.tags?.bicycle || null }, geometry: { type: "LineString", coordinates: e.geometry.map((p) => [p.lon, p.lat]) } }));
+      roadNetwork.addData({ type: "FeatureCollection", features });
+      roadNetworkLoaded = true;
+      return true;
+    } catch (error) {
+      console.warn("OSM cycling network unavailable", error);
+      return false;
+    }
+  }
+  let trailsLoaded = false;
   let trailsLoading;
   async function ensureTrails() {
     if (trailsLoaded) return true;
