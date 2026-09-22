@@ -22,3 +22,9 @@ Suggested GET /api/v1/layers/:mode contract:
 Statuses: fresh, stale, unavailable; distinguish successful empty data from failed fetching. GeoJSON uses WGS84 longitude/latitude. TransportEvent properties: id, sourceId, type, severity, description, startsAt, endsAt, affectedModes, confidence, sourceUpdatedAt. Vehicle and timetable records remain separate; a scheduled departure is not a live prediction. All source text must be rendered as text, never trusted HTML.
 
 Before public reports: authentication, rate limiting, validation, consent, moderation states, expiry and deletion. Keep community claims distinguishable from official events. No silent automatic submission of private drafts when a backend is introduced.
+
+## Cycling routing foundation
+
+The cycling map now treats two datasets as separate network inputs: QLDC Tracks & Trails supplies council cycle-trail geometry and attributes; OpenStreetMap supplies bicycle-permitted road/path geometry for connection analysis. The browser overlay is diagnostic only and is not yet a routing engine.
+
+Production routing must move network acquisition and graph construction to a backend/preprocessing job. It should snap QLDC trail endpoints to OSM nodes only within a controlled tolerance, preserve provenance on every edge, detect disconnected components, and never invent a connector across water/private land merely because two lines are visually close. Route cost can later use QLDC cycle grade/surface plus OSM highway/surface/access tags. Dynamic closures and community reports remain a separate edge-availability/cost overlay so static geometry is not mistaken for current rideability.
