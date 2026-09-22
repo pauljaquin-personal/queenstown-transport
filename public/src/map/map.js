@@ -76,7 +76,11 @@ export function createMap(onStatus) {
     })();
     return trailsLoading;
   }
-  const cycleRoute = L.geoJSON(null, {\n    style: { color: \"#173f36\", weight: 7, opacity: 0.9, dashArray: \"12 8\" },\n    interactive: false,\n  });\n  let location;
+  const cycleRoute = L.geoJSON(null, {
+    style: { color: "#173f36", weight: 7, opacity: 0.9, dashArray: "12 8" },
+    interactive: false,
+  });
+  let location;
   function popup(title, detail) {
     const div = document.createElement("div");
     const strong = document.createElement("strong");
@@ -129,7 +133,18 @@ export function createMap(onStatus) {
             );
         }
     },
-    showCycleRoute(geojson) {\n      cycleRoute.clearLayers();\n      if (!geojson) {\n        if (map.hasLayer(cycleRoute)) map.removeLayer(cycleRoute);\n        return;\n      }\n      cycleRoute.addData(geojson);\n      if (!map.hasLayer(cycleRoute)) cycleRoute.addTo(map);\n      const bounds = cycleRoute.getBounds();\n      if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32] });\n    },\n    focus(place) {
+    showCycleRoute(geojson) {
+      cycleRoute.clearLayers();
+      if (!geojson) {
+        if (map.hasLayer(cycleRoute)) map.removeLayer(cycleRoute);
+        return;
+      }
+      cycleRoute.addData(geojson);
+      if (!map.hasLayer(cycleRoute)) cycleRoute.addTo(map);
+      const bounds = cycleRoute.getBounds();
+      if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32] });
+    },
+    focus(place) {
       map.setView([place.lat, place.lng], 15);
       L.popup()
         .setLatLng([place.lat, place.lng])
