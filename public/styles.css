@@ -520,3 +520,63 @@ dialog label {
 .route-fields { display: grid; grid-template-columns: 48px 1fr; gap: 8px 10px; align-items: center; margin: 12px 0; }
 .route-fields label { font-size: 11px; font-weight: 700; }
 .route-fields select { min-height: 42px; padding: 9px 10px; }
+
+.commute-card {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #d9e3d8;
+  border-radius: 12px;
+  background: #fff;
+}
+.commute-card h3 {
+  margin: 8px 0 5px;
+  font-size: 14px;
+}
+.commute-card p {
+  margin: 5px 0 10px;
+  font-size: 11px;
+}
+.commute-card button {
+  width: 100%;
+}
+.commute-card small,
+.privacy-note {
+  display: block;
+  margin-top: 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #6e7c73;
+}
+.commute-modes {
+  border: 0;
+  padding: 0;
+  margin: 16px 0 0;
+}
+.commute-modes legend {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.commute-modes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 10px 4px 0;
+  min-height: 40px;
+  font-weight: 500;
+}
+.commute-modes input {
+  width: 19px;
+  height: 19px;
+  accent-color: #356c51;
+}
+.optional {
+  font-weight: 400;
+  color: #7b877f;
+}
+#commute-status {
+  min-height: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #35594d;
+}
