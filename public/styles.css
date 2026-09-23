@@ -580,3 +580,137 @@ dialog label {
   font-weight: 600;
   color: #35594d;
 }
+
+.insights-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.insights-page {
+  background: #f8faf7;
+}
+.insights-home {
+  margin-left: auto;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.insights-main {
+  display: block;
+  height: auto;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px 24px 60px;
+}
+.insights-hero {
+  max-width: 760px;
+  margin-bottom: 28px;
+}
+.insights-hero h1 {
+  font-size: clamp(32px, 6vw, 54px);
+  margin: 10px 0;
+}
+.insights-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 20px 0 6px;
+}
+.insights-stat strong {
+  font-size: 38px;
+  letter-spacing: -1px;
+}
+.insights-stat span {
+  color: #61726a;
+  font-size: 13px;
+}
+.insights-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 18px;
+}
+.insight-panel {
+  background: #fff;
+  border: 1px solid #dfe6dd;
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
+}
+.insight-routes {
+  grid-row: span 2;
+}
+.insight-heading h2 {
+  margin: 7px 0 18px;
+  font-size: 20px;
+}
+.insights-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.insights-table th,
+.insights-table td {
+  padding: 11px 8px;
+  border-bottom: 1px solid #e6ebe4;
+  text-align: left;
+}
+.insights-table th:last-child,
+.insights-table td:last-child {
+  text-align: right;
+  width: 90px;
+}
+.insight-bar-row {
+  margin: 12px 0;
+}
+.insight-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.insight-bar-track {
+  height: 9px;
+  background: #edf1eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.insight-bar-fill {
+  height: 100%;
+  background: #547c68;
+  border-radius: inherit;
+}
+.insights-empty {
+  margin: 0;
+  padding: 16px 0;
+  font-size: 12px;
+}
+.insights-note {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border: 1px solid #dfe7d4;
+  background: #eff3e8;
+  border-radius: 12px;
+}
+.insights-note h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.insights-note p {
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .insights-main {
+    padding: 24px 18px 48px;
+  }
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+  .insight-routes {
+    grid-row: auto;
+  }
+  .insights-home {
+    font-size: 11px;
+  }
+}
