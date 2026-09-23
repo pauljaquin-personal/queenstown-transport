@@ -185,6 +185,15 @@ $("#reset").onclick = () => {
   $("#place").value = "";
 };
 $("#locate").onclick = () => map.locate();
+$("#open-commute").onclick = async () => {
+  try {
+    const { openCommuteDialog } = await import("./commute.js?v=20260923-1");
+    openCommuteDialog({ dialog: $("#commute-dialog"), toast });
+  } catch (error) {
+    console.warn("My Commute unavailable", error);
+    toast("My Commute is temporarily unavailable. The map still works.");
+  }
+};
 $("#about").onclick = () => $("#about-dialog").showModal();
 for (const close of document.querySelectorAll("[data-close]"))
   close.onclick = () => close.closest("dialog").close();
