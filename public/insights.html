@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#173f36" />
+    <meta name="description" content="Anonymous aggregate commute insights for Whakatipu." />
+    <title>Commute Insights · Queenstown Transport</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/src/insights.js?v=20260923-1"></script>
+  </head>
+  <body class="insights-page">
+    <header>
+      <a class="brand" href="/" aria-label="Queenstown Transport home">
+        <span class="brandmark">↗</span>
+        <span>Queenstown<span class="brand-sub">TRANSPORT</span></span>
+      </a>
+      <span class="edition">Whakatipu, New Zealand <b>COMMUTE INSIGHTS</b></span>
+      <a class="outline insights-home" href="/">Back to map</a>
+    </header>
+    <main class="insights-main">
+      <section class="insights-hero">
+        <span class="eyebrow">MY COMMUTE · AGGREGATED DATA</span>
+        <h1>How Whakatipu moves.</h1>
+        <p>Anonymous, approximate commute patterns shared by website users. Individual submissions are never shown.</p>
+        <div class="insights-stat">
+          <strong id="total-submissions">—</strong>
+          <span>commutes shared</span>
+        </div>
+        <p class="privacy-note">Origin/destination and category groups are only displayed when at least <strong id="minimum-group">5</strong> submissions contribute to that group.</p>
+      </section>
+
+      <section class="insights-grid" aria-live="polite">
+        <article class="insight-panel insight-routes">
+          <div class="insight-heading">
+            <span class="eyebrow">TRAVEL FLOWS</span>
+            <h2>Common commutes</h2>
+          </div>
+          <div id="routes-content"><p>Loading commute flows…</p></div>
+        </article>
+
+        <article class="insight-panel">
+          <div class="insight-heading">
+            <span class="eyebrow">MODE</span>
+            <h2>How people travel</h2>
+          </div>
+          <div id="modes-content"><p>Loading modes…</p></div>
+        </article>
+
+        <article class="insight-panel">
+          <div class="insight-heading">
+            <span class="eyebrow">TIME</span>
+            <h2>When people travel</h2>
+          </div>
+          <div id="times-content"><p>Loading time bands…</p></div>
+        </article>
+
+        <article class="insight-panel">
+          <div class="insight-heading">
+            <span class="eyebrow">CHANGE</span>
+            <h2>What could change a commute?</h2>
+          </div>
+          <div id="reasons-content"><p>Loading responses…</p></div>
+        </article>
+      </section>
+
+      <section class="insights-note">
+        <h2>About these numbers</h2>
+        <p>This is a voluntary website sample, not a statistically representative survey of Queenstown Lakes residents. It is intended to show emerging patterns and community interest as participation grows.</p>
+      </section>
+    </main>
+  </body>
+</html>
