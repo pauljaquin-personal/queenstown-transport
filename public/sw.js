@@ -1,4 +1,4 @@
-const CACHE = "queenstown-shell-v01-8";
+const CACHE = "queenstown-shell-v01-9";
 const SHELL = [
   "/",
   "/index.html",
@@ -17,7 +17,7 @@ const SHELL = [
 // Optional route assets must never prevent installing the map shell.
 const OPTIONAL = [
   "/src/routing/frankton.js?v=20260923-4",
-  "/src/commute.js?v=20260923-1",
+  "/src/commute.js?v=20260923-1",\n  "/insights.html",\n  "/src/insights.js?v=20260923-1",
   "/data/queenstown-frankton.v1.json",
   "/data/queenstown-frankton-detour.v1.json",
 ];
