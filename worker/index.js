@@ -1,4 +1,5 @@
 import { validateCommute } from "./commutes.js";
+import { MIN_GROUP_SIZE, summariseModeRows, suppressSmallGroups } from "./summary.js";
 
 const json = (data, status=200) => new Response(JSON.stringify(data), {
   status,
@@ -24,11 +25,35 @@ export default {
       return json({ ok:true }, 201);
     }
     if (url.pathname === "/api/commutes/summary" && request.method === "GET") {
-      if (!env.COMMUTES) return json({ ok:false, error:"storage_not_configured", groups:[] }, 503);
-      const result = await env.COMMUTES.prepare(
-        "SELECT origin_zone AS origin, destination_zone AS destination, modes, time_band AS timeBand, COUNT(*) AS count FROM commutes GROUP BY origin_zone,destination_zone,modes,time_band HAVING COUNT(*) >= 5 ORDER BY count DESC LIMIT 200"
-      ).all();
-      return json({ ok:true, minimumGroupSize:5, groups:result.results || [] });
+      if (!env.COMMUTES) return json({ ok:false, error:"storage_not_configured" }, 503);
+      const [totalResult, routeResult, modeResult, timeResult, reasonResult] = await Promise.all([
+        env.COMMUTES.prepare("SELECT COUNT(*) AS count FROM commutes").first(),
+        env.COMMUTES.prepare(
+          "SELECT origin_zone AS origin, destination_zone AS destination, COUNT(*) AS count FROM commutes GROUP BY origin_zone,destination_zone HAVING COUNT(*) >= ? ORDER BY count DESC LIMIT 200"
+        ).bind(MIN_GROUP_SIZE).all(),
+        env.COMMUTES.prepare(
+          "SELECT modes, COUNT(*) AS count FROM commutes GROUP BY modes"
+        ).all(),
+        env.COMMUTES.prepare(
+          "SELECT time_band AS key, COUNT(*) AS count FROM commutes GROUP BY time_band"
+        ).all(),
+        env.COMMUTES.prepare(
+          "SELECT change_reason AS key, COUNT(*) AS count FROM commutes WHERE change_reason IS NOT NULL AND change_reason != '' GROUP BY change_reason"
+        ).all(),
+      ]);
+      return json({
+        ok:true,
+        minimumGroupSize:MIN_GROUP_SIZE,
+        totalSubmissions:Number(totalResult?.count) || 0,
+        routes:(routeResult.results || []).map((row) => ({
+          origin:row.origin,
+          destination:row.destination,
+          count:Number(row.count) || 0,
+        })),
+        modes:summariseModeRows(modeResult.results || []),
+        timeBands:suppressSmallGroups(timeResult.results || []),
+        changeReasons:suppressSmallGroups(reasonResult.results || []),
+      });
     }
     if (url.pathname.startsWith("/api/")) return json({ ok:false, error:"Not found." }, 404);
     return env.ASSETS.fetch(request);
