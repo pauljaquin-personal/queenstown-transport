@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260923-4"></script>
+    <script type="module" src="/src/app.js?v=20260923-5"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -75,6 +75,13 @@
           <a href="https://www.queenstowntrails.org.nz/maps-and-trails/all-trails/frankton-track/" target="_blank" rel="noopener noreferrer">Current Frankton Track detour and notices ↗</a>
           <small>Normal trail: QLDC. Detour/path geometry: © OpenStreetMap contributors, ODbL.</small>
         </section>
+        <section class="commute-card" aria-labelledby="commute-card-title">
+          <span class="eyebrow">COMMUNITY DATA</span>
+          <h3 id="commute-card-title">My Commute</h3>
+          <p>Share an approximate regular journey to help build a picture of how Whakatipu moves. No name, account, exact address or GPS history.</p>
+          <button id="open-commute" type="button">Share my commute</button>
+          <small>Public summaries will only show groups with at least 5 submissions.</small>
+        </section>
         <div class="notice">
           <span class="status-dot"></span>
           <div>
@@ -91,6 +98,51 @@
         </div>
       </aside>
     </main>
+    <dialog id="commute-dialog">
+      <form id="commute-form">
+        <div class="dialog-top">
+          <span class="eyebrow">MY COMMUTE</span>
+          <button type="button" data-close aria-label="Close">×</button>
+        </div>
+        <h2>Help map how Whakatipu moves.</h2>
+        <p>We collect only approximate areas, travel mode and a broad time band. We do not ask for your name, exact address or precise journey time.</p>
+        <label for="commute-origin">From</label>
+        <select id="commute-origin" required></select>
+        <label for="commute-destination">To</label>
+        <select id="commute-destination" required></select>
+        <fieldset class="commute-modes">
+          <legend>How do you usually travel? Choose any that apply.</legend>
+          <label><input type="checkbox" name="commute-mode" value="car"> Car</label>
+          <label><input type="checkbox" name="commute-mode" value="bus"> Bus</label>
+          <label><input type="checkbox" name="commute-mode" value="bike"> Bike</label>
+          <label><input type="checkbox" name="commute-mode" value="walk"> Walk</label>
+          <label><input type="checkbox" name="commute-mode" value="ferry"> Ferry</label>
+        </fieldset>
+        <label for="commute-time">Usually travel</label>
+        <select id="commute-time" required>
+          <option value="weekday-am">Weekday morning peak</option>
+          <option value="weekday-day">Weekday daytime</option>
+          <option value="weekday-pm">Weekday afternoon/evening peak</option>
+          <option value="weekend">Mostly weekends</option>
+          <option value="varies">Varies</option>
+        </select>
+        <label for="commute-change">What would most help you change mode? <span class="optional">Optional</span></label>
+        <select id="commute-change">
+          <option value="">Prefer not to say</option>
+          <option value="safer-cycle-route">Safer cycle route</option>
+          <option value="more-frequent-bus">More frequent bus</option>
+          <option value="faster-bus">Faster bus journey</option>
+          <option value="lower-cost">Lower cost</option>
+          <option value="secure-bike-parking">Secure bike parking</option>
+          <option value="better-walking">Better walking connection</option>
+          <option value="nothing">Nothing — I prefer my current mode</option>
+          <option value="other">Something else</option>
+        </select>
+        <p class="privacy-note">Stored as a coarse origin/destination pair. Public summaries suppress groups with fewer than 5 submissions.</p>
+        <p id="commute-status" role="status"></p>
+        <button class="primary" type="submit">Share my anonymous commute</button>
+      </form>
+    </dialog>
     <dialog id="report-dialog">
       <form id="report-form">
         <div class="dialog-top">
