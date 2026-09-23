@@ -7,5 +7,12 @@
     "directory": "./public",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "COMMUTES",
+      "database_name": "queenstown-transport-data",
+      "database_id": "c9672fba-2aa0-4890-95d2-134bfbb1e3a2"
+    }
+  ]
 }
