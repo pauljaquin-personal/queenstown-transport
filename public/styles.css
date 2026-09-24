@@ -714,3 +714,98 @@ dialog label {
     font-size: 11px;
   }
 }
+
+.commute-hp {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+.insights-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr)) auto auto;
+  gap: 10px;
+  align-items: end;
+  margin: 0 0 18px;
+}
+.insights-controls label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #61726a;
+}
+.insights-controls button {
+  min-width: 118px;
+}
+.insights-controls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.flow-panel {
+  background: #fff;
+  border: 1px solid #dfe6dd;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.flow-panel .insight-heading h2 {
+  margin-bottom: 5px;
+}
+.flow-panel .insight-heading p {
+  margin: 0 0 14px;
+  font-size: 11px;
+}
+#flow-visual {
+  overflow-x: auto;
+}
+.flow-svg {
+  display: block;
+  width: 100%;
+  min-width: 620px;
+  height: auto;
+}
+.flow-line {
+  fill: none;
+  stroke: #547c68;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+.flow-label {
+  fill: #25483d;
+  font-size: 13px;
+  font-family: inherit;
+}
+.ranked-reason {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+.reason-rank {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #edf3ed;
+  font-size: 11px;
+  font-weight: 750;
+  color: #35594d;
+}
+@media (max-width: 900px) {
+  .insights-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .insights-controls {
+    grid-template-columns: 1fr;
+  }
+  .insights-controls button {
+    width: 100%;
+  }
+}
