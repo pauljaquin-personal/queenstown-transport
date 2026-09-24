@@ -8,7 +8,7 @@
     <title>Commute Insights · Queenstown Transport</title>
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
-    <script type="module" src="/src/insights.js?v=20260923-1"></script>
+    <script type="module" src="/src/insights.js?v=20260924-1"></script>
   </head>
   <body class="insights-page">
     <header>
@@ -29,6 +29,48 @@
           <span>commutes shared</span>
         </div>
         <p class="privacy-note">Origin/destination and category groups are only displayed when at least <strong id="minimum-group">5</strong> submissions contribute to that group.</p>
+      </section>
+
+      <section class="insights-controls" aria-label="Commute insight filters">
+        <div>
+          <label for="filter-mode">Mode</label>
+          <select id="filter-mode">
+            <option value="">All modes</option>
+            <option value="car">Car</option>
+            <option value="bus">Bus</option>
+            <option value="bike">Bike</option>
+            <option value="walk">Walk</option>
+            <option value="ferry">Ferry</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-time">Time</label>
+          <select id="filter-time">
+            <option value="">All time bands</option>
+            <option value="weekday-am">Weekday morning peak</option>
+            <option value="weekday-day">Weekday daytime</option>
+            <option value="weekday-pm">Weekday afternoon/evening peak</option>
+            <option value="weekend">Mostly weekends</option>
+            <option value="varies">Varies</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-origin">Origin</label>
+          <select id="filter-origin">
+            <option value="">All origins</option>
+          </select>
+        </div>
+        <button id="clear-filters" type="button">Clear filters</button>
+        <button id="export-csv" type="button">Export visible CSV</button>
+      </section>
+
+      <section class="flow-panel" aria-labelledby="flow-title">
+        <div class="insight-heading">
+          <span class="eyebrow">AGGREGATE FLOW VIEW</span>
+          <h2 id="flow-title">Strongest commute movements</h2>
+          <p>This is a schematic flow view, not a geographic route map.</p>
+        </div>
+        <div id="flow-visual"><p>Loading aggregate flows…</p></div>
       </section>
 
       <section class="insights-grid" aria-live="polite">
