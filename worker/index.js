@@ -15,6 +15,7 @@ export default {
       if (length > 4096) return json({ ok:false, error:"Submission too large." }, 413);
       let body;
       try { body = await request.json(); } catch { return json({ ok:false, error:"Invalid JSON." }, 400); }
+      if (body && typeof body.website === "string" && body.website.trim()) return json({ ok:true }, 201);
       const checked = validateCommute(body);
       if (!checked.ok) return json({ ok:false, error:checked.error }, 400);
       const c = checked.value;
@@ -53,6 +54,9 @@ export default {
         modes:summariseModeRows(modeResult.results || []),
         timeBands:suppressSmallGroups(timeResult.results || []),
         changeReasons:suppressSmallGroups(reasonResult.results || []),
+        cells:(await env.COMMUTES.prepare(
+          "SELECT origin_zone AS origin, destination_zone AS destination, modes, time_band AS timeBand, COALESCE(change_reason, '') AS changeReason, COUNT(*) AS count FROM commutes GROUP BY origin_zone,destination_zone,modes,time_band,COALESCE(change_reason, '') HAVING COUNT(*) >= ? ORDER BY count DESC LIMIT 1000"
+        ).bind(MIN_GROUP_SIZE).all()).results || [],
       });
     }
     if (url.pathname.startsWith("/api/")) return json({ ok:false, error:"Not found." }, 404);
