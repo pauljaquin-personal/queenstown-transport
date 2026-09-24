@@ -187,7 +187,7 @@ $("#reset").onclick = () => {
 $("#locate").onclick = () => map.locate();
 $("#open-commute").onclick = async () => {
   try {
-    const { openCommuteDialog } = await import("./commute.js?v=20260923-1");
+    const { openCommuteDialog } = await import("./commute.js?v=20260924-1");
     openCommuteDialog({ dialog: $("#commute-dialog"), toast });
   } catch (error) {
     console.warn("My Commute unavailable", error);
