@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260923-5"></script>
+    <script type="module" src="/src/app.js?v=20260924-1"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -80,7 +80,8 @@
           <h3 id="commute-card-title">My Commute</h3>
           <p>Share an approximate regular journey to help build a picture of how Whakatipu moves. No name, account, exact address or GPS history.</p>
           <button id="open-commute" type="button">Share my commute</button>
-          <small>Public summaries will only show groups with at least 5 submissions.</small>\n          <a class="insights-link" href="/insights.html">View commute insights →</a>
+          <small>Public summaries will only show groups with at least 5 submissions.</small>
+          <a class="insights-link" href="/insights.html">View commute insights →</a>
         </section>
         <div class="notice">
           <span class="status-dot"></span>
@@ -138,7 +139,11 @@
           <option value="nothing">Nothing — I prefer my current mode</option>
           <option value="other">Something else</option>
         </select>
-        <p class="privacy-note">Stored as a coarse origin/destination pair. Public summaries suppress groups with fewer than 5 submissions.</p>
+        <div class="commute-hp" aria-hidden="true">
+          <label for="commute-website">Leave this field empty</label>
+          <input id="commute-website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="privacy-note">Stored as a coarse origin/destination pair. Public summaries suppress groups with fewer than 5 submissions. A local timestamp is used only to slow repeated submissions from this browser.</p>
         <p id="commute-status" role="status"></p>
         <button class="primary" type="submit">Share my anonymous commute</button>
       </form>
@@ -225,7 +230,10 @@
       <h3>Your privacy</h3>
       <p>
         No accounts or analytics. Drafts stay in this browser until you delete
-        them or clear site data. Location is requested only when you tap My
+        them or clear site data. My Commute stores only coarse journey areas,
+        selected modes, a broad time band and the optional change-mode reason.
+        A local timestamp may be kept in your browser to slow repeated submissions;
+        no device identifier is created. Location is requested only when you tap My
         location and is not saved. Map tiles are requested from OpenStreetMap,
         which receives your IP address and the area viewed.
       </p>
