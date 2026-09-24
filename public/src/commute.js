@@ -36,6 +36,14 @@ export function openCommuteDialog({ dialog, toast }) {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       status.textContent = "";
+      const now = Date.now();
+      try {
+        const lastSubmit = Number(localStorage.getItem("qt-commute-last-submit") || 0);
+        if (lastSubmit && now - lastSubmit < 5 * 60 * 1000) {
+          status.textContent = "Please wait a few minutes before sharing another commute from this browser.";
+          return;
+        }
+      } catch {}
       const modes = [...form.querySelectorAll('input[name="commute-mode"]:checked')].map((input) => input.value);
       if (!modes.length) {
         status.textContent = "Choose at least one travel mode.";
@@ -58,6 +66,7 @@ export function openCommuteDialog({ dialog, toast }) {
             modes,
             timeBand: dialog.querySelector("#commute-time").value,
             changeReason: dialog.querySelector("#commute-change").value || null,
+            website: dialog.querySelector("#commute-website")?.value || "",
           }),
         });
         const result = await response.json().catch(() => ({}));
@@ -69,6 +78,7 @@ export function openCommuteDialog({ dialog, toast }) {
           }
           return;
         }
+        try { localStorage.setItem("qt-commute-last-submit", String(Date.now())); } catch {}
         form.reset();
         origin.value = "queenstown";
         destination.value = "frankton";
