@@ -1,3 +1,4 @@
+import { parseModes, selectCells, aggregate, routeRows } from "./insights-data.js?v=20260928-1";
 const $ = (selector) => document.querySelector(selector);
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -43,47 +44,12 @@ function emptyMessage(text) {
   return p;
 }
 
-function parseModes(value) {
-  try {
-    const modes = JSON.parse(value);
-    return Array.isArray(modes) ? modes : [];
-  } catch {
-    return [];
-  }
-}
-
 function filteredCells() {
-  const mode = $("#filter-mode").value;
-  const time = $("#filter-time").value;
-  const origin = $("#filter-origin").value;
-  return (insightData?.cells || []).filter((cell) => {
-    const modes = parseModes(cell.modes);
-    return (!mode || modes.includes(mode)) &&
-      (!time || cell.timeBand === time) &&
-      (!origin || cell.origin === origin);
-  });
-}
-
-function aggregate(cells, keyFn) {
-  const totals = new Map();
-  for (const cell of cells) {
-    const count = Number(cell.count) || 0;
-    for (const key of keyFn(cell)) {
-      if (!key) continue;
-      totals.set(key, (totals.get(key) || 0) + count);
-    }
-  }
-  return [...totals.entries()]
-    .map(([key, count]) => ({ key, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-function routeRows(cells) {
-  return aggregate(cells, (cell) => [cell.origin + "|" + cell.destination])
-    .map((row) => {
-      const [origin, destination] = row.key.split("|");
-      return { origin, destination, count: row.count };
-    });
+  return selectCells(insightData?.cells, {
+    mode: $("#filter-mode").value,
+    time: $("#filter-time").value,
+    origin: $("#filter-origin").value,
+  }, insightData?.minimumGroupSize);
 }
 
 function renderBars(container, rows, labelMap, keyName = "key") {
@@ -191,32 +157,45 @@ function renderFlow(routes) {
     container.append(emptyMessage("No aggregate flow has reached the threshold for these filters."));
     return;
   }
-  const rowHeight = 54;
-  const height = Math.max(150, top.length * rowHeight + 24);
-  const max = Math.max(...top.map((row) => row.count), 1);
+  const origins = aggregate(top, r => [r.origin]);
+  const destinations = aggregate(top, r => [r.destination]);
+  const height = Math.max(origins.length, destinations.length) * 64 + 90;
+  const max = Math.max(...top.map(r => r.count));
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("viewBox", `0 0 800 ${height}`);
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Schematic aggregate commute flows; line thickness represents response count.");
+  svg.setAttribute("aria-label", "Top commute connections, from origins on the left to destinations on the right. Full counts are listed in Common commutes below.");
   svg.classList.add("flow-svg");
-
-  top.forEach((route, index) => {
-    const y = 35 + index * rowHeight;
-    const width = 3 + (route.count / max) * 17;
+  svg.append(svgText(205, 24, "FROM →", "end"), svgText(595, 24, "TO", "start"));
+  const position = (rows, key) => 65 + rows.findIndex(r => r.key === key) * 64;
+  top.forEach(route => {
+    const y1 = position(origins, route.origin);
+    const y2 = position(destinations, route.destination);
     const path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", `M 220 ${y} C 330 ${y - 12}, 470 ${y + 12}, 580 ${y}`);
+    path.setAttribute("d", `M 230 ${y1} C 370 ${y1}, 430 ${y2}, 570 ${y2}`);
     path.setAttribute("class", "flow-line");
-    path.setAttribute("stroke-width", width.toFixed(1));
+    path.setAttribute("stroke-width", String(3 + route.count / max * 19));
+    path.setAttribute("tabindex", "0");
+    const description = `${LABELS.zones[route.origin] || route.origin} → ${LABELS.zones[route.destination] || route.destination}: ${route.count} responses`;
+    path.setAttribute("aria-label", description);
     const title = document.createElementNS(SVG_NS, "title");
-    title.textContent = `${LABELS.zones[route.origin] || route.origin} to ${LABELS.zones[route.destination] || route.destination}: ${route.count} responses`;
+    title.textContent = description;
     path.append(title);
-    svg.append(
-      path,
-      svgText(205, y + 5, LABELS.zones[route.origin] || route.origin, "end"),
-      svgText(595, y + 5, LABELS.zones[route.destination] || route.destination, "start"),
-      svgText(400, y - 9, String(route.count), "middle"),
-    );
+    svg.append(path);
   });
+  for (const [rows, x, anchor] of [[origins, 205, "end"], [destinations, 595, "start"]]) {
+    rows.forEach(row => {
+      const y = position(rows, row.key);
+      svg.append(svgText(x, y + 4, LABELS.zones[row.key] || row.key, anchor));
+      const dot = document.createElementNS(SVG_NS, "circle");
+      dot.setAttribute("cx", x === 205 ? "230" : "570");
+      dot.setAttribute("cy", String(y));
+      dot.setAttribute("r", "5");
+      dot.setAttribute("fill", "#173f36");
+      svg.append(dot);
+    });
+  }
+  container.append(emptyMessage(`Showing ${top.length} of ${routes.length} published connections. Thicker lines mean more responses. Read exact counts below.`));
   container.append(svg);
 }
 
@@ -228,6 +207,11 @@ function renderAll() {
   const times = aggregate(cells, (cell) => [cell.timeBand]);
   const reasons = aggregate(cells, (cell) => [cell.changeReason]).filter((row) => row.key);
 
+  renderBars($("#origins-content"), aggregate(cells, c => [c.origin]), LABELS.zones);
+  renderBars($("#destinations-content"), aggregate(cells, c => [c.destination]), LABELS.zones);
+  $("#visible-responses").textContent = String(cells.reduce((sum, c) => sum + Number(c.count), 0));
+  $("#visible-connections").textContent = String(routes.length);
+  $("#overview-status").textContent = cells.length ? "Published groups matching your filters" : "No publishable groups match yet. Hidden responses are not zero demand.";
   renderFlow(routes);
   renderRoutes(routes);
   renderBars($("#modes-content"), modes, LABELS.modes, "mode");
@@ -291,7 +275,9 @@ async function loadInsights() {
   } catch (error) {
     console.warn("Commute insights unavailable", error);
     $("#total-submissions").textContent = "—";
-    for (const selector of ["#flow-visual", "#routes-content", "#modes-content", "#times-content", "#reasons-content"]) {
+    $("#overview-status").textContent = "Commute insights are temporarily unavailable. The map is still available.";
+    $("#export-csv").disabled = true;
+    for (const selector of ["#origins-content", "#destinations-content", "#flow-visual", "#routes-content", "#modes-content", "#times-content", "#reasons-content"]) {
       $(selector).replaceChildren(emptyMessage("Commute insights are temporarily unavailable."));
     }
   }

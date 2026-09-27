@@ -87,3 +87,21 @@ test('versioned entry points are precached exactly; routing remains optional', a
   h.handlers.fetch({request:{url:'https://qt.test/data/queenstown-frankton.v1.json',method:'GET'},respondWith(){intercepted=true;},waitUntil(){}});
   assert.ok(intercepted);
 });
+test('insight modules remain optional and summary API is never cached', async () => {
+  const h = harness(async () => { throw Error('offline'); });
+  let promise;
+  h.handlers.install({ waitUntil: p => promise = p }); await promise;
+  assert.ok(!h.shell.some(p => p.includes('insights')));
+  const html = readFileSync(new URL('../public/insights.html', import.meta.url), 'utf8');
+  const entry = html.match(/src="(\/src\/insights.js[^\"]+)"/)[1];
+  const js = readFileSync(new URL('../public/src/insights.js', import.meta.url), 'utf8');
+  const module = '/src/' + js.match(/from "\.\/(insights-data.js[^\"]+)"/)[1];
+  for (const path of [entry, module]) {
+    promise = undefined;
+    h.handlers.fetch({ request: { url: 'https://qt.test' + path, method: 'GET' }, respondWith: p => promise = p });
+    assert.equal(await promise, h.cached);
+  }
+  let intercepted = false;
+  h.handlers.fetch({ request: { url: 'https://qt.test/api/commutes/summary', method: 'GET' }, respondWith: () => intercepted = true });
+  assert.equal(intercepted, false);
+});

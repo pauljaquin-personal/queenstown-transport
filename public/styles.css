@@ -809,3 +809,16 @@ dialog label {
     width: 100%;
   }
 }
+
+/* Commute overview is scoped to its separate page. */
+.demand-overview { margin: 24px 0; }
+.demand-overview > p { max-width: 78ch; line-height: 1.6; color: #4d625a; }
+.demand-stats { display: flex; flex-wrap: wrap; gap: 32px; margin: 22px 0; }
+.demand-stats strong { display: block; font-size: 32px; color: #173f36; }
+.demand-stats span { display: block; font-size: 13px; margin-top: 5px; }
+.flow-line:hover, .flow-line:focus { opacity: 1; stroke: #b16328; outline: none; }
+.insights-page .insight-panel h3 { margin-top: 0; }
+.demand-overview .insights-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+  .demand-overview .insights-grid { grid-template-columns: 1fr; }
+}

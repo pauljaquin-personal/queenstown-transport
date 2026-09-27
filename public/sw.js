@@ -1,4 +1,4 @@
-const CACHE = "queenstown-shell-v01-10";
+const CACHE = "queenstown-shell-v01-11";
 const SHELL = [
   "/",
   "/index.html",
@@ -18,7 +18,8 @@ const OPTIONAL = [
   "/src/routing/frankton.js?v=20260923-4",
   "/src/commute.js?v=20260924-1",
   "/insights.html",
-  "/src/insights.js?v=20260924-1",
+  "/src/insights.js?v=20260928-1",
+  "/src/insights-data.js?v=20260928-1",
   "/data/queenstown-frankton.v1.json",
   "/data/queenstown-frankton-detour.v1.json",
 ];
