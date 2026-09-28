@@ -822,3 +822,21 @@ dialog label {
 @media (max-width: 700px) {
   .demand-overview .insights-grid { grid-template-columns: 1fr; }
 }
+
+/* Everyday cycling planner */
+.cycle-pin-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.cycle-pin-buttons button { flex: 1; font-size: 11px; padding: 8px; }
+.cycle-pin-buttons [hidden] { display: none; }
+.route-prototype .cycle-check { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 12px; }
+.cycle-check input { width: 17px; height: 17px; flex: 0 0 auto; }
+.route-prototype #cycle-results p, .cycle-notices p { line-height: 1.55; font-size: 12px; }
+#cycle-results h4 { margin: 14px 0 6px; font-size: 16px; }
+.cycle-warning { background: #fff0de; border-left: 3px solid #bd5900; padding: 10px; color: #713300; }
+.cycle-notices, #cycle-results details { margin: 14px 0; font-size: 12px; }
+.cycle-notices summary, #cycle-results summary { cursor: pointer; font-weight: 700; }
+.cycle-notices a { display: block; margin: 10px 0; }
+#cycle-results ol { padding-left: 20px; max-height: 280px; overflow-y: auto; }
+#cycle-results li { padding: 5px 0; line-height: 1.4; }
+.cycle-legend { font-size: 11px; line-height: 1.6; }
+.legend-path { color: #2f7d5b; }.legend-road { color: #236bb0; }.legend-busy { color: #a84b00; }.legend-walk { color: #7b4190; }
+.picking-cycle-point { cursor: crosshair; }

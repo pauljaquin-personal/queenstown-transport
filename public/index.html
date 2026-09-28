@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260924-1"></script>
+    <script type="module" src="/src/app.js?v=20260928-2"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -65,15 +65,36 @@
             <label for="route-to">To</label>
             <select id="route-to"></select>
           </div>
-          <label for="route-variant">Route view</label>
+          <div class="cycle-pin-buttons">
+            <button id="pick-start" type="button">Pick start on map</button>
+            <button id="pick-end" type="button">Pick finish on map</button>
+            <button id="cancel-pick" type="button" hidden>Cancel picking</button>
+          </div>
+          <p id="pick-status" role="status"></p>
+          <label for="route-variant">Cycling preference</label>
           <select id="route-variant">
+            <option value="quiet">Prefer paths &amp; quieter roads</option>
+            <option value="direct">Shorter route</option>
             <option value="detour">2026 detour — partial map</option>
             <option value="normal">Normal trail — closed sections</option>
           </select>
+          <label class="cycle-check"><input id="avoid-busy" type="checkbox"> Exclude busy roads</label>
+          <label class="cycle-check"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
+          <p id="network-status" role="status"></p>
           <button id="test-cycle-route" type="button">Show route</button>
-          <p id="route-status" role="status">Queenstown ↔ Frankton only. The detour map has a gap at the Perkins Road works and stops at the roadside path near Frankton Beach. Follow current signs.</p>
+          <p id="route-status" role="status">Choose areas or pick two points on the map. Everyday routes can include gravel, road traffic and walking your bike. Known closures and technical MTB trails are excluded.</p>
+          <div id="cycle-results"></div>
+          <p class="cycle-legend"><span class="legend-path">Green: path/trail</span> · <span class="legend-road">Blue: road</span> · <span class="legend-busy">Orange: busy road</span> · <span class="legend-walk">Purple dashed: walk bike</span></p>
+          <details class="cycle-notices"><summary>Coverage, closures &amp; other cycling options</summary>
+            <p>Whakatipu road and trail snapshot, checked 28 September 2026. Some affected trails are excluded in full until their closure boundaries can be verified. This can make routes longer or unavailable. No live closure or elevation feed; “quieter” is a routing preference, not a safety rating. Busy-road flags use mapped road classes or speeds, not measured traffic volumes.</p>
+            <p>Frankton Track, Arrow River Bridges, Lake Hayes, Twin Rivers and Lower Shotover have exclusions. Shotover Gorge and technical mountain-bike trails are outside this everyday planner.</p>
+            <a href="https://queenstowntrails.org.nz/maps-and-trails/all-trails/" target="_blank" rel="noopener noreferrer">Queenstown Trails maps &amp; current notices ↗</a>
+            <a href="https://www.doc.govt.nz/parks-and-recreation/things-to-do/mountain-biking/" target="_blank" rel="noopener noreferrer">DOC cycling options &amp; access information ↗</a>
+            <p>Map picks and route calculations stay in this browser and are not saved. Start and finish markers show the nearest mapped network points within 150 m; access from your chosen pin is not routed.</p>
+            <a href="/data/cycle-network.v1.json" download>Download the routing data (ODbL)</a>
+          </details>
           <a href="https://www.queenstowntrails.org.nz/maps-and-trails/all-trails/frankton-track/" target="_blank" rel="noopener noreferrer">Current Frankton Track detour and notices ↗</a>
-          <small>Normal trail: QLDC. Detour/path geometry: © OpenStreetMap contributors, ODbL.</small>
+          <small>Routing: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors, ODbL</a>. Trail overlay: QLDC. Map coverage and conditions can change.</small>
         </section>
         <section class="commute-card" aria-labelledby="commute-card-title">
           <span class="eyebrow">COMMUNITY DATA</span>

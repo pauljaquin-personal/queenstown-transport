@@ -134,3 +134,18 @@ export const modes = [
     links: [],
   },
 ];
+
+// Named public-road points in the OSM snapshot, not household addresses or area centroids.
+export const CYCLE_PLACES = [
+  ['queenstown', 'Queenstown · Camp Street', 168.6596795, -45.0303056],
+  ['fernhill', 'Fernhill · Fernhill Road', 168.6387, -45.0380],
+  ['frankton', 'Frankton · Gray Street', 168.7305316, -45.016644],
+  ['hanleys-farm', 'Hanley’s Farm · Howden Drive', 168.7453591, -45.0675115],
+  ['jacks-point', 'Jack’s Point · Maori Jack Road', 168.7506536, -45.0739085],
+  ['kelvin-heights', 'Kelvin Heights · Peninsula Road', 168.7268573, -45.0294196],
+  ['arthurs-point', 'Arthurs Point · village', 168.6845, -44.9820],
+  ['shotover-country', 'Shotover Country · Stalker Road', 168.7732850, -45.0004865],
+  ['lake-hayes-estate', 'Lake Hayes Estate · Nerin Square', 168.7894999, -45.0014183],
+  ['arrowtown', 'Arrowtown · Ramshaw Lane', 168.8331036, -44.9382617],
+  ['gibbston', 'Gibbston · river trail access', 168.9701185, -45.0285032],
+];

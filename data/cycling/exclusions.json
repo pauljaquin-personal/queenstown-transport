@@ -1,0 +1,12 @@
+{
+  "reviewedAt": "2026-09-28",
+  "reviewAfter": "2026-10-05",
+  "blockedRelations": [14780154, 21321069, 21321215, 21320812, 21321106],
+  "blockedNamePatterns": ["Frankton Track", "Arrow River Bridges", "Lake[s]? Hayes Trail", "Bush Creek", "Lower Shotover", "Coronet Loop", "Twin Rivers", "Shotover Gorge", "Hugo Tunnel", "Kimi-ākau"],
+  "notices": [
+    {"title": "Storm damage and closures", "text": "Official notices flag rain damage, Arrow River Bridges closure between Tobins Bridge and Whitechapel Road, the northern Lake Hayes bridge closure, flooding at Lower Shotover and a Bush Creek closure. Affected named trails are excluded conservatively, including open portions where the closure boundary has not been mapped.", "url": "https://queenstowntrails.org.nz/maps-and-trails/all-trails/"},
+    {"title": "Frankton Track works", "text": "The normal Frankton Track is excluded. The signed 2026 footpath detour still has an unmapped gap in our earlier survey; use its separate partial map and follow signs. No continuous detour is invented.", "url": "https://queenstowntrails.org.nz/maps-and-trails/all-trails/frankton-track/"},
+    {"title": "Twin Rivers review", "text": "A detour notice near Shotover Delta appears on the trail index. Twin Rivers is excluded until the affected section and alternative are verified.", "url": "https://queenstowntrails.org.nz/maps-and-trails/all-trails/twin-rivers-trail/"},
+    {"title": "Everyday riding scope", "text": "Shotover Gorge includes Grade 3 and 4 sections and is excluded from this everyday planner, along with mapped technical MTB tracks. Trail membership is not a guarantee of easy riding.", "url": "https://queenstowntrails.org.nz/maps-and-trails/all-trails/shotover-gorge/"}
+  ]
+}

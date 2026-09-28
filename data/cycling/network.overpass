@@ -1,0 +1,4 @@
+[out:json][timeout:120][bbox:-45.13,168.57,-44.88,169.04];
+way[highway]->.roads;
+(.roads; node(w.roads)[barrier]; node(w.roads)[access]; node(w.roads)[bicycle]; rel(bw.roads)[type=restriction]; rel(bw.roads)[route=bicycle];);
+out body geom;

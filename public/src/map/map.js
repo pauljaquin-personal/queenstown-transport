@@ -7,6 +7,8 @@ export function createMap(onStatus) {
     return {
       render() {},
       showCycleRoute() {},
+      showCycleNetwork() {},
+      pickCyclePoint() { onStatus("Map picking is unavailable. Choose a named area instead."); },
       focus() {},
       reset() {},
       locate() {
@@ -78,6 +80,14 @@ export function createMap(onStatus) {
     return trailsLoading;
   }
   let cycleRoute;
+  let cycleNetwork;
+  let pickCallback;
+  map.on("click", event => {
+    if (!pickCallback) return;
+    const callback = pickCallback; pickCallback = null;
+    map.getContainer().classList.remove("picking-cycle-point");
+    callback([event.latlng.lng, event.latlng.lat]);
+  });
   let location;
   function popup(title, detail) {
     const div = document.createElement("div");
@@ -131,16 +141,31 @@ export function createMap(onStatus) {
             );
         }
     },
+    pickCyclePoint(callback) {
+      pickCallback = callback;
+      map.getContainer().classList.toggle("picking-cycle-point", !!callback);
+    },
+    showCycleNetwork(geojson) {
+      if (cycleNetwork) { map.removeLayer(cycleNetwork); cycleNetwork = null; }
+      if (!geojson) return;
+      cycleNetwork = L.geoJSON(geojson, {
+        renderer: L.canvas(),
+        style: feature => ({ color: feature.properties.kind === "walk-bike" ? "#7b4190" : feature.properties.busy ? "#bd5900" : feature.properties.kind === "road" ? "#236bb0" : "#2f7d5b", weight: 3, opacity: 0.6 }),
+        onEachFeature(feature, layer) { layer.bindPopup(popup(feature.properties.name, "OSM routing snapshot · check access and conditions")); },
+      }).addTo(map);
+      if (cycleRoute) cycleRoute.bringToFront();
+    },
     showCycleRoute(geojson) {
+      trails.setStyle({ opacity: geojson ? 0.25 : 0.9 });
       if (!cycleRoute && !geojson) return;
       if (!cycleRoute) cycleRoute = L.geoJSON(null, {
         style: feature => ({
-          color: feature.properties.closed ? "#b83232" : feature.properties.kind === "walk-bike" ? "#7b4190" : feature.properties.kind === "detour" ? "#bd5900" : "#236bb0",
+          color: feature.properties.closed ? "#b83232" : feature.properties.kind === "walk-bike" ? "#7b4190" : feature.properties.kind === "detour" || feature.properties.busy ? "#bd5900" : feature.properties.kind === "path" ? "#2f7d5b" : "#236bb0",
           weight: 7, opacity: 0.95,
           dashArray: feature.properties.closed || feature.properties.kind === "walk-bike" ? "10 8" : null,
         }),
         onEachFeature(feature, layer) {
-          layer.bindPopup(popup(feature.properties.name, `${feature.properties.source} · ${feature.properties.closed ? "Closed — normal alignment only" : feature.properties.kind === "walk-bike" ? "Walk your bike on this footpath / crossing" : feature.properties.kind === "detour" ? "Mapped path — follow temporary signs and dismount where instructed" : "Connector — check current conditions"}`));
+          layer.bindPopup(popup(feature.properties.name, `${feature.properties.source} · ${feature.properties.closed ? "Closed — normal alignment only" : feature.properties.kind === "walk-bike" ? "Walk your bike on this footpath / crossing" : feature.properties.kind === "detour" ? "Mapped path — follow temporary signs and dismount where instructed" : feature.properties.busy ? "Busy road — riding in traffic" : feature.properties.kind === "path" ? "Cycle path / trail — may be shared or unsealed" : "Road connection — riding in traffic"}`));
         },
       });
       cycleRoute.clearLayers();

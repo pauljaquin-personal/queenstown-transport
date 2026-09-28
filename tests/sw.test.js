@@ -105,3 +105,14 @@ test('insight modules remain optional and summary API is never cached', async ()
   h.handlers.fetch({ request: { url: 'https://qt.test/api/commutes/summary', method: 'GET' }, respondWith: () => intercepted = true });
   assert.equal(intercepted, false);
 });
+
+test('cycle graph and engine remain optional, with offline fallback after visiting', async () => {
+  const h=harness(async()=>{throw Error('offline');});let promise;
+  h.handlers.install({waitUntil:p=>promise=p});await promise;
+  assert.ok(!h.shell.some(p=>p.includes('network.js') || p.includes('cycle-policy') || p.includes('cycle-network')));
+  for(const path of ['/src/routing/network.js?v=20260928-2','/src/routing/cycle-policy.js?v=20260928-2','/data/cycle-network.v1.json']){
+    promise=undefined;
+    h.handlers.fetch({request:{url:'https://qt.test'+path,method:'GET'},respondWith:p=>promise=p});
+    assert.equal(await promise,h.cached);
+  }
+});
