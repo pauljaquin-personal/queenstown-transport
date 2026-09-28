@@ -1,5 +1,6 @@
 import { validateCommute } from "./commutes.js";
 import { MIN_GROUP_SIZE, summariseModeRows, suppressSmallGroups } from "./summary.js";
+import { queenstownGtfs } from "./gtfs.js";
 
 const json = (data, status=200) => new Response(JSON.stringify(data), {
   status,
@@ -9,6 +10,27 @@ const json = (data, status=200) => new Response(JSON.stringify(data), {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/buses" && request.method === "GET") {
+      const cache = caches.default;
+      const cacheKey = new Request(new URL("/api/buses", request.url), { method:"GET" });
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+      try {
+        const data = await queenstownGtfs();
+        const response = new Response(JSON.stringify({ ok:true, ...data }), {
+          headers:{
+            "content-type":"application/json; charset=utf-8",
+            "cache-control":"public, max-age=3600, s-maxage=21600",
+            "x-content-type-options":"nosniff",
+          },
+        });
+        await cache.put(cacheKey, response.clone());
+        return response;
+      } catch (error) {
+        console.warn("ORC GTFS unavailable", error);
+        return json({ ok:false, error:"Bus network temporarily unavailable." }, 502);
+      }
+    }
     if (url.pathname === "/api/elevation" && request.method === "POST") {
       const length = Number(request.headers.get("content-length") || 0);
       if (length > 20000) return json({ ok:false, error:"Request too large." }, 413);
