@@ -38,43 +38,67 @@ const pickFinishOption = document.createElement("option");
 pickFinishOption.value = "pick:finish";
 pickFinishOption.textContent = "Pick on map…";
 $("#route-to").append(pickFinishOption);
-for (const mode of modes) {
+function createLayerRow(mode, compact = false) {
   const row = document.createElement("div");
-  row.className = "layer-row";
+  row.className = compact ? "layer-row map-layer-row" : "layer-row";
   row.dataset.mode = mode.id;
   row.style.setProperty("--color", mode.color);
   row.style.setProperty("--tint", mode.tint);
+
   const button = document.createElement("button");
   button.className = "layer-select";
-  button.innerHTML = `<span class="mode-icon" aria-hidden="true">${mode.icon}</span><span>${mode.name}<small>${mode.subtitle}</small></span>`;
+  button.innerHTML = compact
+    ? `<span class="mode-icon" aria-hidden="true">${mode.icon}</span><span>${mode.name}</span>`
+    : `<span class="mode-icon" aria-hidden="true">${mode.icon}</span><span>${mode.name}<small>${mode.subtitle}</small></span>`;
   button.onclick = () => {
     selected = mode.id;
     render();
   };
+
   const label = document.createElement("label");
   label.className = "toggle";
   const toggle = document.createElement("input");
   toggle.type = "checkbox";
   toggle.checked = enabled.has(mode.id);
-  toggle.setAttribute(
-    "aria-label",
-    `Show ${mode.name.toLowerCase()} on map`,
-  );
+  toggle.setAttribute("aria-label", `Show ${mode.name.toLowerCase()} on map`);
   toggle.onchange = () => {
     toggle.checked ? enabled.add(mode.id) : enabled.delete(mode.id);
     selected = mode.id;
     render();
   };
+
   label.append(toggle);
   row.append(button, label);
-  $("#layers").append(row);
+  return row;
 }
+
+for (const mode of modes) {
+  $("#layers").append(createLayerRow(mode));
+  $("#map-layers").append(createLayerRow(mode, true));
+}
+
+const mapLayersButton = $("#map-layers-button");
+const mapLayersPanel = $("#map-layers-panel");
+function setMapLayersOpen(open) {
+  mapLayersPanel.hidden = !open;
+  mapLayersButton.setAttribute("aria-expanded", String(open));
+}
+mapLayersButton.onclick = () => setMapLayersOpen(mapLayersPanel.hidden);
+$("#map-layers-close").onclick = () => setMapLayersOpen(false);
+document.addEventListener("click", (event) => {
+  if (!mapLayersPanel.hidden && !event.target.closest(".map-layers-control")) setMapLayersOpen(false);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setMapLayersOpen(false);
+});
 function render() {
   map.render(enabled, readReports());
   for (const row of document.querySelectorAll(".layer-row")) {
     const active = row.dataset.mode === selected;
     row.classList.toggle("active", active);
     row.querySelector("button").setAttribute("aria-pressed", String(active));
+    const toggle = row.querySelector('input[type="checkbox"]');
+    if (toggle) toggle.checked = enabled.has(row.dataset.mode);
   }
   const mode = modes.find((m) => m.id === selected);
   const container = $("#details");
