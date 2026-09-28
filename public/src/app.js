@@ -172,6 +172,10 @@ for (const [button, selector, label] of [["#pick-start", "#route-from", "start"]
       if (!option) { option = document.createElement("option"); option.value = "picked-" + label; select.append(option); }
       option.textContent = `Map ${label} (${point[1].toFixed(4)}, ${point[0].toFixed(4)})`;
       select.value = option.value;
+      if (label === "finish") {
+        $("#journey-destination").textContent = option.textContent;
+        $("#place").value = "";
+      }
       $("#cancel-pick").hidden = true;
       $("#pick-status").textContent = `Map ${label} selected. Choose Show route.`;
       clearRoute();
