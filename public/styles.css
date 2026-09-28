@@ -1648,3 +1648,81 @@ dialog label {
     margin-top: 5px;
   }
 }
+
+
+/* Floating map layers */
+.map-layers-control {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1200;
+}
+.map-layers-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 3px 14px #173f3626;
+  font-size: 12px;
+}
+.map-layers-panel {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  width: min(260px, calc(100vw - 28px));
+  padding: 8px;
+  border: 1px solid #d8e1da;
+  border-radius: 12px;
+  background: rgba(255,255,252,.98);
+  box-shadow: 0 8px 28px #102a2630;
+  backdrop-filter: blur(8px);
+}
+.map-layers-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 4px 6px 8px;
+  font-size: 11px;
+}
+.map-layers-heading #map-layers-close {
+  min-height: 32px;
+  width: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+}
+.map-layer-row {
+  margin: 4px 0;
+  padding: 4px;
+  border-radius: 9px;
+}
+.map-layer-row .layer-select {
+  padding: 5px 6px;
+  font-size: 12px;
+}
+.map-layer-row .mode-icon {
+  width: 29px;
+  height: 29px;
+  font-size: 16px;
+}
+.map-layer-row .toggle {
+  padding: 4px;
+}
+@media (max-width: 760px) {
+  .map-layers-control {
+    top: 10px;
+    left: 10px;
+  }
+  .map-layers-button {
+    min-height: 40px;
+    padding: 7px 10px;
+  }
+  .map-layers-panel {
+    top: 46px;
+    width: min(245px, calc(100vw - 20px));
+  }
+}
