@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260928-2"></script>
+    <script type="module" src="/src/app.js?v=20260928-3"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -30,93 +30,123 @@
         >Whakatipu, New Zealand <b>EARLY ACCESS · v0.1</b></span
       ><button id="install" class="outline">Install app</button>
     </header>
-    <main>
+    <main class="transport-shell">
       <section class="map-area" aria-label="Queenstown transport map">
         <div id="map"></div>
-        <div class="map-heading">
-          <span class="eyebrow">YOUR WAY AROUND WHAKATIPU</span>
-          <h1>A little less driving.<br />A little more exploring.</h1>
-        </div>
-        <div class="map-tools">
-          <button id="locate" aria-label="Show my location">
-            ◎ <span>My location</span></button
-          ><button id="reset">↺ <span>Queenstown</span></button>
-        </div>
-        <div id="map-status" role="status">
-          Map requires an internet connection.
-        </div>
-      </section>
-      <aside id="explore">
-        <div class="panel-heading">
-          <span class="eyebrow">LET’S GET YOU THERE</span>
-          <h2>Explore your options</h2>
-          <p>One place for the ways we move.</p>
-        </div>
-        <label class="search-label" for="place">Find a local place</label
-        ><select id="place">
-          <option value="">Choose a place…</option>
-        </select>
-        <section class="route-prototype" aria-labelledby="cycle-route-title">
-          <span class="eyebrow">CYCLE ROUTE</span>
-          <h3 id="cycle-route-title">Plan a cycle journey</h3>
-          <div class="route-fields">
-            <label for="route-from">From</label>
-            <select id="route-from"></select>
-            <label for="route-to">To</label>
-            <select id="route-to"></select>
-          </div>
-          <div class="cycle-pin-buttons">
-            <button id="pick-start" type="button">Pick start on map</button>
-            <button id="pick-end" type="button">Pick finish on map</button>
-            <button id="cancel-pick" type="button" hidden>Cancel picking</button>
-          </div>
-          <p id="pick-status" role="status"></p>
-          <label for="route-variant">Cycling preference</label>
-          <select id="route-variant">
-            <option value="quiet">Prefer paths &amp; quieter roads</option>
-            <option value="direct">Shorter route</option>
-            <option value="detour">2026 detour — partial map</option>
-            <option value="normal">Normal trail — closed sections</option>
+
+        <section class="journey-search-card" aria-labelledby="journey-search-title">
+          <span class="eyebrow">GET AROUND WHAKATIPU</span>
+          <h1 id="journey-search-title">Where are you going?</h1>
+          <label class="sr-only" for="place">Choose a local destination</label>
+          <select id="place" class="destination-search">
+            <option value="">Search a place or destination…</option>
           </select>
-          <label class="cycle-check"><input id="avoid-busy" type="checkbox"> Exclude busy roads</label>
-          <label class="cycle-check"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
-          <p id="network-status" role="status"></p>
-          <button id="test-cycle-route" type="button">Show route</button>
-          <p id="route-status" role="status">Choose areas or pick two points on the map. Everyday routes can include gravel, road traffic and walking your bike. Known closures and technical MTB trails are excluded.</p>
-          <div id="cycle-results"></div>
-          <p class="cycle-legend"><span class="legend-path">Green: path/trail</span> · <span class="legend-road">Blue: road</span> · <span class="legend-busy">Orange: busy road</span> · <span class="legend-walk">Purple dashed: walk bike</span></p>
-          <details class="cycle-notices"><summary>Coverage, closures &amp; other cycling options</summary>
-            <p>Whakatipu road and trail snapshot, checked 28 September 2026. Some affected trails are excluded in full until their closure boundaries can be verified. This can make routes longer or unavailable. No live closure or elevation feed; “quieter” is a routing preference, not a safety rating. Busy-road flags use mapped road classes or speeds, not measured traffic volumes.</p>
-            <p>Frankton Track, Arrow River Bridges, Lake Hayes, Twin Rivers and Lower Shotover have exclusions. Shotover Gorge and technical mountain-bike trails are outside this everyday planner.</p>
-            <a href="https://queenstowntrails.org.nz/maps-and-trails/all-trails/" target="_blank" rel="noopener noreferrer">Queenstown Trails maps &amp; current notices ↗</a>
-            <a href="https://www.doc.govt.nz/parks-and-recreation/things-to-do/mountain-biking/" target="_blank" rel="noopener noreferrer">DOC cycling options &amp; access information ↗</a>
-            <p>Map picks and route calculations stay in this browser and are not saved. Start and finish markers show the nearest mapped network points within 150 m; access from your chosen pin is not routed.</p>
-            <a href="/data/cycle-network.v1.json" download>Download the routing data (ODbL)</a>
-          </details>
-          <a href="https://www.queenstowntrails.org.nz/maps-and-trails/all-trails/frankton-track/" target="_blank" rel="noopener noreferrer">Current Frankton Track detour and notices ↗</a>
-          <small>Routing: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors, ODbL</a>. Trail overlay: QLDC. Map coverage and conditions can change.</small>
+          <p>Start with a destination. Cycling routes are available now; live bus, ferry and road comparisons will appear here as their feeds are connected.</p>
         </section>
-        <section class="commute-card" aria-labelledby="commute-card-title">
-          <span class="eyebrow">COMMUNITY DATA</span>
-          <h3 id="commute-card-title">My Commute</h3>
-          <p>Share an approximate regular journey to help build a picture of how Whakatipu moves. No name, account, exact address or GPS history.</p>
-          <button id="open-commute" type="button">Share my commute</button>
-          <small>Public summaries will only show groups with at least 5 submissions.</small>
-          <a class="insights-link" href="/insights.html">View commute insights →</a>
-        </section>
-        <div class="notice">
-          <span class="status-dot"></span>
-          <div>
-            <strong>Local guide · live feeds coming next</strong>
-            <p>Traffic conditions and live arrivals are not connected.</p>
-          </div>
+
+        <div class="map-tools">
+          <button id="locate" aria-label="Show my location">◎ <span>My location</span></button>
+          <button id="reset">↺ <span>Queenstown</span></button>
         </div>
-        <h3>On your map</h3>
-        <div id="layers" aria-label="Map layers"></div>
-        <section id="details" aria-live="polite"></section>
+        <div id="map-status" role="status">Map requires an internet connection.</div>
+      </section>
+
+      <aside id="explore" class="journey-panel">
+        <section class="panel-section journey-section" aria-labelledby="journey-title">
+          <div class="section-heading">
+            <span class="eyebrow">JOURNEY</span>
+            <h2 id="journey-title">Plan your trip</h2>
+            <p>Choose where you are travelling from and to. Cycling is the first connected route mode.</p>
+          </div>
+
+          <section class="route-prototype" aria-labelledby="cycle-route-title">
+            <div class="mode-heading">
+              <span class="mode-chip">🚲 Cycling</span>
+              <span class="tag">ROUTING LIVE</span>
+            </div>
+            <h3 id="cycle-route-title">Cycle journey</h3>
+            <div class="route-fields">
+              <label for="route-from">From</label>
+              <select id="route-from"></select>
+              <label for="route-to">To</label>
+              <select id="route-to"></select>
+            </div>
+            <div class="cycle-pin-buttons">
+              <button id="pick-start" type="button">Pick start on map</button>
+              <button id="pick-end" type="button">Pick finish on map</button>
+              <button id="cancel-pick" type="button" hidden>Cancel picking</button>
+            </div>
+            <p id="pick-status" role="status"></p>
+            <label for="route-variant">Cycling preference</label>
+            <select id="route-variant">
+              <option value="quiet">Prefer paths &amp; quieter roads</option>
+              <option value="direct">Shorter route</option>
+              <option value="detour">2026 detour — partial map</option>
+              <option value="normal">Normal trail — closed sections</option>
+            </select>
+            <label class="cycle-check"><input id="avoid-busy" type="checkbox"> Exclude busy roads</label>
+            <label class="cycle-check"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
+            <p id="network-status" role="status"></p>
+            <button id="test-cycle-route" class="primary journey-action" type="button">Find cycle route</button>
+            <p id="route-status" role="status">Choose areas or pick two points on the map. Everyday routes can include gravel, road traffic and walking your bike.</p>
+            <div id="cycle-results"></div>
+            <p class="cycle-legend"><span class="legend-path">Green: path/trail</span> · <span class="legend-road">Blue: road</span> · <span class="legend-busy">Orange: busy road</span> · <span class="legend-walk">Purple dashed: walk bike</span></p>
+            <details class="cycle-notices">
+              <summary>Coverage, closures &amp; route data</summary>
+              <p>Whakatipu road and trail snapshot, checked 28 September 2026. Some affected trails are excluded in full until their closure boundaries can be verified. This can make routes longer or unavailable. No live closure or elevation feed; “quieter” is a routing preference, not a safety rating. Busy-road flags use mapped road classes or speeds, not measured traffic volumes.</p>
+              <p>Frankton Track, Arrow River Bridges, Lake Hayes, Twin Rivers and Lower Shotover have exclusions. Shotover Gorge and technical mountain-bike trails are outside this everyday planner.</p>
+              <a href="https://queenstowntrails.org.nz/maps-and-trails/all-trails/" target="_blank" rel="noopener noreferrer">Queenstown Trails maps &amp; current notices ↗</a>
+              <a href="https://www.doc.govt.nz/parks-and-recreation/things-to-do/mountain-biking/" target="_blank" rel="noopener noreferrer">DOC cycling options &amp; access information ↗</a>
+              <p>Map picks and route calculations stay in this browser and are not saved. Start and finish markers show the nearest mapped network points within 150 m; access from your chosen pin is not routed.</p>
+              <a href="/data/cycle-network.v1.json" download>Download the routing data (ODbL)</a>
+            </details>
+            <small>Routing: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors, ODbL</a>. Trail overlay: QLDC.</small>
+          </section>
+
+          <div class="future-modes" aria-label="Transport modes coming later">
+            <div><span>🚌 Bus</span><small>Live journey comparison coming later</small></div>
+            <div><span>⛴ Ferry</span><small>Live journey comparison coming later</small></div>
+            <div><span>🚗 Drive</span><small>Live traffic comparison coming later</small></div>
+            <div><span>🚶 Walk</span><small>Walking routes coming later</small></div>
+          </div>
+        </section>
+
+        <section class="panel-section network-section" aria-labelledby="network-now-title">
+          <div class="section-heading compact-heading">
+            <span class="eyebrow">NETWORK NOW</span>
+            <h2 id="network-now-title">What’s on the map</h2>
+          </div>
+          <div class="notice">
+            <span class="status-dot"></span>
+            <div>
+              <strong>Live feeds coming next</strong>
+              <p>Traffic conditions and live arrivals are not connected yet.</p>
+            </div>
+          </div>
+          <details class="layers-drawer">
+            <summary>Layers &amp; transport information</summary>
+            <div id="layers" aria-label="Map layers"></div>
+            <section id="details" aria-live="polite"></section>
+          </details>
+        </section>
+
+        <section class="panel-section community-section" aria-labelledby="community-title">
+          <div class="section-heading compact-heading">
+            <span class="eyebrow">COMMUNITY</span>
+            <h2 id="community-title">Help improve local transport</h2>
+            <p>Share an approximate commute or keep a private note about a transport issue.</p>
+          </div>
+          <div class="community-actions">
+            <button id="open-commute" class="primary" type="button">Share my commute</button>
+            <a class="button-link" href="/insights.html">View commute insights</a>
+            <button id="open-report" type="button">Keep an issue draft</button>
+          </div>
+          <p class="privacy-note">Commute summaries only show groups with at least 5 submissions. Issue drafts remain on this device.</p>
+        </section>
+
         <div class="panel-footer">
-          <button id="about">Sources & app information</button
-          ><span>Made for the journey.</span>
+          <button id="about">Sources &amp; app information</button>
+          <span>Made for the journey.</span>
         </div>
       </aside>
     </main>
