@@ -1548,3 +1548,77 @@ dialog label {
     gap: 6px;
   }
 }
+
+
+/* Route elevation profile */
+.route-elevation {
+  margin: 10px 0 4px;
+}
+.route-elevation-loading,
+.route-elevation-unavailable {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  color: #7b877f;
+  font-size: 11px;
+}
+.route-elevation-stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 3px;
+  font-size: 10px;
+  color: #61726a;
+}
+.route-elevation-stats strong {
+  color: #183c34;
+}
+.route-elevation-svg {
+  display: block;
+  width: 100%;
+  height: 76px;
+  overflow: visible;
+}
+.route-elevation-baseline {
+  stroke: #dfe6df;
+  stroke-width: 1;
+}
+.route-elevation-line {
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.route-elevation-path {
+  stroke: #2f7d5b;
+}
+.route-elevation-road {
+  stroke: #236bb0;
+}
+.route-elevation-busy {
+  stroke: #a84b00;
+}
+.route-elevation-walk {
+  stroke: #7b4190;
+}
+.route-elevation-unsealed {
+  stroke-dasharray: 6 5;
+}
+.route-elevation-key {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: -3px;
+  font-size: 15px;
+  line-height: 1;
+}
+.route-elevation-key .key-path { color: #2f7d5b; }
+.route-elevation-key .key-road { color: #236bb0; }
+.route-elevation-key .key-busy { color: #a84b00; }
+.route-elevation-key .key-walk { color: #7b4190; }
+@media (max-width: 760px) {
+  .route-elevation-svg {
+    height: 68px;
+  }
+  .route-elevation {
+    margin-top: 8px;
+  }
+}
