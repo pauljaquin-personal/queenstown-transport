@@ -1742,3 +1742,86 @@ dialog label {
     font-size: 11px;
   }
 }
+
+
+/* Ultra-clean route result refinements */
+.route-result-primary {
+  flex-wrap: nowrap;
+  gap: 7px;
+  white-space: nowrap;
+}
+.route-result-primary .route-ascent,
+.route-result-primary .route-descent {
+  font-size: 10px;
+  color: #61726a;
+}
+.route-result-primary .route-ascent strong,
+.route-result-primary .route-descent strong {
+  font-size: 10px;
+  color: #183c34;
+}
+.route-result-chips {
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.route-result-chips::-webkit-scrollbar {
+  display: none;
+}
+.route-result-chip {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  white-space: nowrap;
+}
+.route-result-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+.route-shortest-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  font-size: 10px;
+  font-weight: 650;
+  color: #35594d;
+}
+.route-shortest-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #356c51;
+}
+.route-export-button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+}
+.route-elevation-stats {
+  display: none;
+}
+.map-layers-button {
+  width: 42px;
+  min-width: 42px;
+  justify-content: center;
+  padding: 0;
+  font-size: 18px;
+}
+@media (max-width: 760px) {
+  .map-layers-button {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+  .route-result-chips {
+    gap: 8px;
+  }
+}
