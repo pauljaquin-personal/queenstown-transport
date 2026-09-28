@@ -6,6 +6,7 @@ on:
     paths:
       - "data/cycling/exclusions.json"
       - "scripts/build-cycle-network.js"
+      - "tests/frankton-shotover-route.test.js"
       - ".github/workflows/rebuild-cycle-network.yml"
   workflow_dispatch:
 
@@ -26,6 +27,9 @@ jobs:
 
       - name: Rebuild cycling network
         run: node scripts/build-cycle-network.js
+
+      - name: Check Frankton to Shotover Country route
+        run: node --test tests/frankton-shotover-route.test.js
 
       - name: Commit generated network if changed
         run: |
