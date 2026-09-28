@@ -76,11 +76,11 @@ export const modes = [
     icon: "▣",
     color: "#597847",
     tint: "#edf2e6",
-    subtitle: "Orbus information",
-    status: "OFFICIAL LINKS",
-    title: "Make room for the bus",
+    subtitle: "Routes & stops",
+    status: "ORC GTFS",
+    title: "Queenstown Orbus network",
     description:
-      "Find Queenstown bus routes, timetables and alerts from Orbus. Map points are approximate local reference locations, not verified bus stops. Live vehicles and arrivals are not connected.",
+      "Official ORC GTFS routes and stops are shown on the map. This is scheduled network data, not live vehicle tracking or predicted arrivals. Check Orbus for current alerts and service changes.",
     links: [
       [
         "Orbus timetables & alerts",
