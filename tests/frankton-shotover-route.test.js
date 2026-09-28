@@ -28,14 +28,27 @@ test('usual cycling uses Twin Rivers and avoids SH6 Shotover bridge', () => {
     feature.properties.name || '',
     ...(feature.properties.networks || []),
   ]);
+  const closest = Math.min(...route.features.flatMap(feature =>
+    feature.geometry.coordinates.map(point => metres(point, SH6_SHOTOVER_BRIDGE))
+  ));
+  console.log('ROUTE_DISTANCE_M', Math.round(route.metadata.distanceMetres));
+  console.log('CLOSEST_TO_SH6_M', Math.round(closest));
+  for (const feature of route.features) {
+    console.log('SECTION', JSON.stringify({
+      name:feature.properties.name,
+      kind:feature.properties.kind,
+      busy:feature.properties.busy,
+      metres:Math.round(feature.properties.metres),
+      networks:feature.properties.networks,
+      first:feature.geometry.coordinates[0],
+      last:feature.geometry.coordinates.at(-1),
+    }));
+  }
+
   assert.ok(
     labels.some(label => /Twin Rivers/i.test(label)),
     'Expected the usual cycling route to use the Twin Rivers Trail connection'
   );
-
-  const closest = Math.min(...route.features.flatMap(feature =>
-    feature.geometry.coordinates.map(point => metres(point, SH6_SHOTOVER_BRIDGE))
-  ));
   assert.ok(
     closest > 260,
     `Usual cycling route came within ${Math.round(closest)} m of the SH6 Shotover bridge`
