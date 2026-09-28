@@ -218,6 +218,66 @@ export function createMap(onStatus) {
     return true;
   }
 
+  let busRoutes;
+  let busStops;
+  let busesLoaded = false;
+  let busesLoading;
+
+  function busPopup(stop) {
+    const div=document.createElement("div");
+    const strong=document.createElement("strong");
+    strong.textContent=stop.name || "Orbus stop";
+    div.append(strong,document.createElement("br"));
+    const note=document.createElement("small");
+    note.textContent="Official ORC GTFS stop · scheduled network data, not a live arrival.";
+    div.append(note);
+    return div;
+  }
+
+  async function ensureBuses() {
+    if (busesLoaded) return true;
+    if (busesLoading) return busesLoading;
+    busesLoading=(async()=>{
+      try {
+        onStatus("Loading official Orbus routes & stops…");
+        const response=await fetch("/api/buses",{headers:{Accept:"application/json"}});
+        if (!response.ok) throw Error("Bus API returned "+response.status);
+        const data=await response.json();
+        if (!data.ok || !Array.isArray(data.shapes) || !Array.isArray(data.stops)) throw Error("Unexpected bus response");
+        busRoutes=L.layerGroup();
+        for (const shape of data.shapes) {
+          if (!Array.isArray(shape.coordinates) || shape.coordinates.length<2) continue;
+          const line=L.polyline(shape.coordinates.map(([lng,lat])=>[lat,lng]),{
+            color:shape.color || "#597847",weight:5,opacity:.82
+          });
+          const div=document.createElement("div");
+          const strong=document.createElement("strong");
+          strong.textContent="Route "+shape.route;
+          div.append(strong);
+          if (shape.name) div.append(document.createElement("br"),document.createTextNode(shape.name));
+          const note=document.createElement("small");
+          note.textContent="Source: Otago Regional Council GTFS · scheduled route geometry.";
+          div.append(document.createElement("br"),note);
+          line.bindPopup(div).addTo(busRoutes);
+        }
+        busStops=L.layerGroup();
+        for (const stop of data.stops) {
+          L.circleMarker([stop.lat,stop.lng],{
+            radius:4,color:"#315c36",weight:2,fillColor:"#fff",fillOpacity:1
+          }).bindPopup(busPopup(stop)).addTo(busStops);
+        }
+        busesLoaded=true;
+        onStatus("Orbus scheduled network · "+data.routes.length+" Queenstown routes · "+data.stops.length+" stops");
+        return true;
+      } catch (error) {
+        console.warn("Orbus GTFS unavailable",error);
+        onStatus("Orbus routes & stops are temporarily unavailable. Use the official Orbus link for current information.");
+        return false;
+      } finally { busesLoading=null; }
+    })();
+    return busesLoading;
+  }
+
   let cycleRoute;
   let cycleNetwork;
   let pickCallback;
@@ -256,7 +316,7 @@ export function createMap(onStatus) {
       markers.clearLayers();
       for (const place of places) {
         const mode = modes.find(
-          (m) => enabled.has(m.id) && place.modes.includes(m.id),
+          (m) => enabled.has(m.id) && m.id !== "buses" && place.modes.includes(m.id),
         );
         if (mode)
           marker(
@@ -265,6 +325,17 @@ export function createMap(onStatus) {
             "Approximate landmark only. Check official information for services.",
           );
       }
+      if (enabled.has("buses")) {
+        const ok=await ensureBuses();
+        if (ok) {
+          if (busRoutes && !map.hasLayer(busRoutes)) busRoutes.addTo(map);
+          if (busStops && !map.hasLayer(busStops)) busStops.addTo(map);
+        }
+      } else {
+        if (busRoutes && map.hasLayer(busRoutes)) map.removeLayer(busRoutes);
+        if (busStops && map.hasLayer(busStops)) map.removeLayer(busStops);
+      }
+
       if (enabled.has("cycling")) {
         const ok = await ensureTrails();
         if (ok && !map.hasLayer(trails)) trails.addTo(map);
