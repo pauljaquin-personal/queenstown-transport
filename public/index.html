@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260928-5"></script>
+    <script type="module" src="/src/app.js?v=20260928-6"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -52,15 +52,14 @@
           <div class="section-heading">
             <span class="eyebrow">JOURNEY</span>
             <h2 id="journey-title">Plan your trip</h2>
-            <p>Choose where you are travelling from and to. Cycling is the first connected route mode.</p>
+            <p>Choose where you are travelling from and to.</p>
           </div>
 
           <section class="route-prototype" aria-labelledby="cycle-route-title">
-            <div class="mode-heading">
-              <span class="mode-chip">🚲 Cycling</span>
+            <div class="mode-heading compact-mode-heading">
+              <span class="mode-icon-only" aria-hidden="true">🚲</span>
               <span class="tag">ROUTING LIVE</span>
             </div>
-            <h3 id="cycle-route-title">Cycle journey</h3>
             <div class="route-fields route-fields-single">
               <label for="route-from">From</label>
               <select id="route-from"></select>
@@ -71,14 +70,9 @@
               <button id="change-destination" type="button">Change</button>
             </div>
             <select id="route-to" class="sr-only" tabindex="-1" aria-hidden="true"></select>
-            <div class="cycle-pin-buttons">
-              <button id="pick-start" type="button">Pick start on map</button>
-              <button id="pick-end" type="button">Pick finish on map</button>
-              <button id="cancel-pick" type="button" hidden>Cancel picking</button>
-            </div>
+            <button id="cancel-pick" class="cancel-map-pick" type="button" hidden>Cancel map pick</button>
             <p id="pick-status" role="status"></p>
-            <label for="route-variant">Cycling preference</label>
-            <select id="route-variant">
+            <select id="route-variant" aria-label="Route preference">
               <option value="quiet">Prefer paths &amp; quieter roads</option>
               <option value="direct">Shorter route</option>
               <option value="detour">2026 detour — partial map</option>
@@ -87,12 +81,12 @@
             <label class="cycle-check"><input id="avoid-busy" type="checkbox"> Exclude busy roads</label>
             <label class="cycle-check"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
             <p id="network-status" role="status"></p>
-            <button id="test-cycle-route" class="primary journey-action" type="button">Find cycle route</button>
-            <p id="route-status" role="status">Choose areas or pick two points on the map. Everyday routes can include gravel, road traffic and walking your bike.</p>
+            <button id="test-cycle-route" class="primary journey-action route-icon-button" type="button" aria-label="Find route" title="Find route">→</button>
+            <p id="route-status" class="sr-only" role="status">Ready to route.</p>
             <div id="cycle-results"></div>
-            <p class="cycle-legend"><span class="legend-path">Green: path/trail</span> · <span class="legend-road">Blue: road</span> · <span class="legend-busy">Orange: busy road</span> · <span class="legend-walk">Purple dashed: walk bike</span></p>
             <details class="cycle-notices">
               <summary>Coverage, closures &amp; route data</summary>
+              <p class="cycle-legend"><span class="legend-path">Green: path/trail</span> · <span class="legend-road">Blue: road</span> · <span class="legend-busy">Orange: busy road</span> · <span class="legend-walk">Purple dashed: walk bike</span></p>
               <p>Whakatipu road and trail snapshot, checked 28 September 2026. Some affected trails are excluded in full until their closure boundaries can be verified. This can make routes longer or unavailable. No live closure or elevation feed; “quieter” is a routing preference, not a safety rating. Busy-road flags use mapped road classes or speeds, not measured traffic volumes.</p>
               <p>Frankton Track, Arrow River Bridges, Lake Hayes, Twin Rivers and Lower Shotover have exclusions. Shotover Gorge and technical mountain-bike trails are outside this everyday planner.</p>
               <a href="https://queenstowntrails.org.nz/maps-and-trails/all-trails/" target="_blank" rel="noopener noreferrer">Queenstown Trails maps &amp; current notices ↗</a>
