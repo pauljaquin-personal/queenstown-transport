@@ -16,6 +16,11 @@ for (const [id, name] of ROUTE_PLACES) {
     $(selector).append(option);
   }
 }
+const pickStartOption = document.createElement("option");
+pickStartOption.value = "pick:start";
+pickStartOption.textContent = "Pick on map…";
+$("#route-from").append(pickStartOption);
+
 $("#route-from").value = "queenstown";
 $("#route-to").value = "frankton";
 $("#journey-destination").textContent = $("#route-to").selectedOptions[0]?.textContent || "Frankton";
@@ -44,6 +49,10 @@ for (const [id, name] of ROUTE_PLACES) {
   option.textContent = baseName;
   $("#place").append(option);
 }
+const pickFinishOption = document.createElement("option");
+pickFinishOption.value = "pick:finish";
+pickFinishOption.textContent = "Pick on map…";
+$("#place").append(pickFinishOption);
 for (const mode of modes) {
   const row = document.createElement("div");
   row.className = "layer-row";
@@ -146,7 +155,15 @@ function clearRoute() {
   $("#cycle-results").replaceChildren();
   $("#route-status").textContent = "Choose Show route to display the selected journey.";
 }
-$("#route-from").onchange = clearRoute;
+let lastRouteFrom = "queenstown";
+$("#route-from").onchange = () => {
+  if ($("#route-from").value === "pick:start") {
+    beginMapPick("start", "#route-from", lastRouteFrom);
+    return;
+  }
+  lastRouteFrom = $("#route-from").value;
+  clearRoute();
+};
 $("#route-to").onchange = () => {
   const selectedText = $("#route-to").selectedOptions[0]?.textContent || "Choose destination";
   $("#journey-destination").textContent = selectedText;
@@ -155,35 +172,48 @@ $("#route-to").onchange = () => {
 $("#route-variant").onchange = () => {
   const legacy = !["quiet", "direct"].includes($("#route-variant").value);
   $("#avoid-busy").disabled = legacy;
-  $(".cycle-legend").hidden = legacy;
   clearRoute();
 };
 $("#avoid-busy").onchange = clearRoute;
 const picked = {};
-for (const [button, selector, label] of [["#pick-start", "#route-from", "start"], ["#pick-end", "#route-to", "finish"]]) {
-  $(button).onclick = () => {
+let activePick = null;
+function beginMapPick(label, selector, restoreValue = "") {
+  clearRoute();
+  activePick = { label, selector, restoreValue };
+  $("#cancel-pick").hidden = false;
+  $("#pick-status").textContent = `Tap the map to choose your ${label}.`;
+  map.pickCyclePoint(point => {
+    picked[label] = point;
+    const select = $(selector);
+    let option = select.querySelector('[value="picked-' + label + '"]');
+    if (!option) {
+      option = document.createElement("option");
+      option.value = "picked-" + label;
+      select.append(option);
+    }
+    option.textContent = `Map ${label} (${point[1].toFixed(4)}, ${point[0].toFixed(4)})`;
+    select.value = option.value;
+    if (label === "start") lastRouteFrom = option.value;
+    if (label === "finish") {
+      $("#journey-destination").textContent = option.textContent;
+      $("#place").value = "";
+      $("#route-to").value = option.value;
+    }
+    $("#cancel-pick").hidden = true;
+    $("#pick-status").textContent = "";
+    activePick = null;
     clearRoute();
-    $("#cancel-pick").hidden = false;
-    $("#pick-status").textContent = `Click the map to choose your ${label}.`;
-    map.pickCyclePoint(point => {
-      picked[label] = point;
-      const select = $(selector);
-      let option = select.querySelector('[value="picked-' + label + '"]');
-      if (!option) { option = document.createElement("option"); option.value = "picked-" + label; select.append(option); }
-      option.textContent = `Map ${label} (${point[1].toFixed(4)}, ${point[0].toFixed(4)})`;
-      select.value = option.value;
-      if (label === "finish") {
-        $("#journey-destination").textContent = option.textContent;
-        $("#place").value = "";
-      }
-      $("#cancel-pick").hidden = true;
-      $("#pick-status").textContent = `Map ${label} selected. Choose Show route.`;
-      clearRoute();
-    });
-    $("#map").scrollIntoView({block:"center", behavior:"smooth"});
-  };
+  });
+  $("#map").scrollIntoView({ block:"center", behavior:"smooth" });
 }
-$("#cancel-pick").onclick = () => { map.pickCyclePoint(null); $("#cancel-pick").hidden = true; $("#pick-status").textContent = "Map picking cancelled."; };
+$("#cancel-pick").onclick = () => {
+  map.pickCyclePoint(null);
+  if (activePick?.selector === "#route-from") $("#route-from").value = activePick.restoreValue || lastRouteFrom;
+  if (activePick?.label === "finish") $("#place").value = "";
+  activePick = null;
+  $("#cancel-pick").hidden = true;
+  $("#pick-status").textContent = "";
+};
 let overlayRequest = 0;
 $("#cycle-network-toggle").onchange = async event => {
   const request = ++overlayRequest;
@@ -274,6 +304,10 @@ $("#test-cycle-route").onclick = async () => {
 $("#place").onchange = (event) => {
   const value = event.target.value;
   if (!value) return;
+  if (value === "pick:finish") {
+    beginMapPick("finish", "#route-to");
+    return;
+  }
 
   const destinationMap = {
     town: "queenstown",
@@ -306,7 +340,7 @@ $("#place").onchange = (event) => {
       $("#route-to").selectedOptions[0]?.textContent || displayName || "Selected destination";
     clearRoute();
     $("#route-status").textContent =
-      `${displayName || $("#journey-destination").textContent} selected as your destination. Choose where you are starting, then Find cycle route.`;
+      `${displayName || $("#journey-destination").textContent} selected as your destination. Choose where you are starting, then route.`;
   }
 };
 $("#change-destination").onclick = () => {
