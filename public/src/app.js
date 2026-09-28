@@ -335,15 +335,16 @@ async function renderElevationProfile(route, box) {
       svg.append(line);
     }
 
-    const stats = document.createElement("div");
-    stats.className = "route-elevation-stats";
-    stats.innerHTML = `<span>↗ <strong>${ascent} m</strong></span><span>↘ <strong>${descent} m</strong></span>`;
+    const ascentTarget = box.querySelector(".route-ascent");
+    const descentTarget = box.querySelector(".route-descent");
+    if (ascentTarget) ascentTarget.innerHTML = `↗ <strong>${ascent} m</strong>`;
+    if (descentTarget) descentTarget.innerHTML = `↘ <strong>${descent} m</strong>`;
 
     const note = document.createElement("div");
     note.className = "route-elevation-key";
     note.innerHTML = '<span class="key-path">━</span><span class="key-road">━</span><span class="key-busy">━</span><span class="key-walk">┄</span>';
 
-    profile.replaceChildren(stats, svg, note);
+    profile.replaceChildren(svg, note);
   } catch {
     if (!profile.isConnected) return;
     profile.innerHTML = '<div class="route-elevation-unavailable">Elevation unavailable</div>';
@@ -362,7 +363,7 @@ function renderCycleResult(route) {
 
   const distance = document.createElement("div");
   distance.className = "route-result-primary";
-  distance.innerHTML = `<span aria-hidden="true">📏</span><strong>${km(m.distanceMetres)}</strong>`;
+  distance.innerHTML = `<span aria-hidden="true">📏</span><strong>${km(m.distanceMetres)}</strong><span class="route-ascent">↗ …</span><span class="route-descent">↘ …</span>`;
 
   const chips = document.createElement("div");
   chips.className = "route-result-chips";
@@ -391,7 +392,9 @@ function renderCycleResult(route) {
   const exportButton = document.createElement("button");
   exportButton.type = "button";
   exportButton.className = "route-export-button";
-  exportButton.innerHTML = '<span aria-hidden="true">↗</span><span>Export</span>';
+  exportButton.setAttribute("aria-label", "Export GPX");
+  exportButton.title = "Export GPX";
+  exportButton.innerHTML = '<span aria-hidden="true">↗</span>';
   exportButton.onclick = async () => {
     exportButton.disabled = true;
     try {
@@ -406,7 +409,15 @@ function renderCycleResult(route) {
       exportButton.disabled = false;
     }
   };
-  actions.append(exportButton);
+  const shortestLabel = document.createElement("label");
+  shortestLabel.className = "route-shortest-toggle";
+  const shortest = document.createElement("input");
+  shortest.type = "checkbox";
+  shortest.checked = m.profile === "direct";
+  shortest.onchange = () => planCycleRoute(shortest.checked ? "direct" : "quiet");
+  shortestLabel.append(shortest, document.createTextNode(" Shortest route"));
+
+  actions.append(shortestLabel, exportButton);
 
   box.append(summary, actions);
 
@@ -453,59 +464,43 @@ function renderCycleResult(route) {
   renderElevationProfile(route, box);
   box.append(details);
 }
-$("#test-cycle-route").onclick = async () => {
+async function planCycleRoute(profile = "quiet") {
   const request = ++routeRequest;
   map.pickCyclePoint(null);
   $("#cancel-pick").hidden = true;
   $("#pick-status").textContent = "";
   const from = $("#route-from").value;
   const to = $("#route-to").value;
-  const variant = $("#route-variant").value;
   map.showCycleRoute(null);
   $("#cycle-results").replaceChildren();
+
   if (from === to) {
     $("#route-status").textContent = "Choose two different places.";
     return;
   }
-  if (["quiet", "direct"].includes(variant)) {
-    $("#route-status").textContent = "Finding a connected cycle route…";
-    try {
-      const { loadNetwork, findRoute } = await import("./routing/network.js?v=20260929-2");
-      const network = await loadNetwork();
-      if (request !== routeRequest) return;
-      const point = id => id.startsWith("picked-") ? picked[id.slice(7)] : id.startsWith("location:") ? picked[id.slice(9)] : ROUTE_PLACES.find(p => p[0] === id)?.slice(2);
-      const route = findRoute(network, point(from), point(to), { profile: variant, avoidBusy: $("#avoid-busy").checked, start: $("#route-from").selectedOptions[0].textContent, end: $("#route-to").selectedOptions[0].textContent });
-      map.showCycleRoute(route);
-      renderCycleResult(route);
-      $("#route-status").textContent = "Route found. Review its road, trail and walking sections below.";
-    } catch (error) {
-      if (request !== routeRequest) return;
-      map.showCycleRoute(null);
-      $("#route-status").textContent = error.message.startsWith("No ") || error.message.startsWith("Choose ") ? error.message : "Cycling network unavailable. The map still works. Try again.";
-    }
-    return;
-  }
-  if (!((from === "queenstown" && to === "frankton") || (from === "frankton" && to === "queenstown"))) {
-    $("#route-status").textContent = "Only Queenstown ↔ Frankton is mapped so far.";
-    return;
-  }
-  $("#route-status").textContent = "Loading verified route geometry…";
+
+  $("#route-status").textContent = "Finding a connected cycle route…";
   try {
-    const { loadRoute } = await import("./routing/frankton.js?v=20260923-4");
-    const route = await loadRoute(from, to, undefined, variant);
+    const { loadNetwork, findRoute } = await import("./routing/network.js?v=20260929-2");
+    const network = await loadNetwork();
     if (request !== routeRequest) return;
+    const point = id => id.startsWith("picked-") ? picked[id.slice(7)] : id.startsWith("location:") ? picked[id.slice(9)] : ROUTE_PLACES.find(p => p[0] === id)?.slice(2);
+    const route = findRoute(network, point(from), point(to), {
+      profile,
+      avoidBusy: $("#avoid-busy").checked,
+      start: $("#route-from").selectedOptions[0].textContent,
+      end: $("#route-to").selectedOptions[0].textContent,
+    });
     map.showCycleRoute(route);
-    const detour = variant === "detour";
-    const legend = detour ? "Orange: mapped detour. Purple dashed: walk your bike. Gaps are not connected." : "Red dashed: closed. Blue: connections.";
-    const dated = detour && new Date().toISOString().slice(0,10) >= route.metadata.reviewAfter ? " Detour snapshot needs rechecking; the planned works period has ended." : "";
-    $("#route-status").textContent = `${route.metadata.start} → ${route.metadata.end} · ${(route.metadata.distanceMetres / 1000).toFixed(1)} km${detour ? " mapped (excludes gaps)" : ""}. ${route.metadata.notice} ${legend} Sources checked ${route.metadata.verifiedAt}.${dated}`;
+    renderCycleResult(route);
+    $("#route-status").textContent = "Route found. Review its road, trail and walking sections below.";
   } catch (error) {
     if (request !== routeRequest) return;
-    console.warn("Cycle route unavailable", error);
     map.showCycleRoute(null);
-    $("#route-status").textContent = "Cycle route unavailable. The map and From/To controls still work. Try again.";
+    $("#route-status").textContent = error.message.startsWith("No ") || error.message.startsWith("Choose ") ? error.message : "Cycling network unavailable. The map still works. Try again.";
   }
-};
+}
+$("#test-cycle-route").onclick = () => planCycleRoute("quiet");
 $("#locate").onclick = () => map.locate().catch(() => {});
 async function openCommute() {
   try {
