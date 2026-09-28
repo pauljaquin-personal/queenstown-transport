@@ -1,9 +1,9 @@
-const CACHE = "queenstown-shell-v01-15";
+const CACHE = "queenstown-shell-v01-16";
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
-  "/src/app.js?v=20260928-5",
+  "/src/app.js?v=20260928-6",
   "/src/api/catalog.js",
   "/src/api/reports.js",
   "/src/map/map.js?v=20260928-2",
