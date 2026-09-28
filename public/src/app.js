@@ -231,6 +231,7 @@ async function renderElevationProfile(route, box) {
     if (!profile.isConnected) return;
 
     const { points, ascent, descent } = elevationStats(elevated);
+    route.__elevationPoints = points;
     const valid = points.filter((p) => Number.isFinite(p.elevation));
     if (valid.length < 2) throw Error("Elevation unavailable");
 
@@ -323,7 +324,30 @@ function renderCycleResult(route) {
   }
 
   summary.append(distance, chips);
-  box.append(summary);
+
+  const actions = document.createElement("div");
+  actions.className = "route-result-actions";
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.className = "route-export-button";
+  exportButton.innerHTML = '<span aria-hidden="true">↗</span><span>Export</span>';
+  exportButton.onclick = async () => {
+    exportButton.disabled = true;
+    try {
+      const { shareOrDownloadGpx } = await import("./routing/export.js?v=20260928-1");
+      const result = await shareOrDownloadGpx(route, route.__elevationPoints || null);
+      if (result.method === "download") toast(result.hasElevation ? "GPX downloaded with elevation." : "GPX downloaded.");
+      else if (result.method === "share" && !result.hasElevation) toast("Route shared as GPX.");
+    } catch (error) {
+      console.warn("Route export unavailable", error);
+      toast("Route export is unavailable. Try again.");
+    } finally {
+      exportButton.disabled = false;
+    }
+  };
+  actions.append(exportButton);
+
+  box.append(summary, actions);
 
   if (m.totals.busy > 0) {
     const warning = document.createElement("div");
