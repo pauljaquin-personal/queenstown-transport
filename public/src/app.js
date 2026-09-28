@@ -218,6 +218,76 @@ $("#cycle-network-toggle").onchange = async event => {
     $("#network-status").textContent = "Network overlay unavailable. The map still works; try again.";
   }
 };
+async function renderElevationProfile(route, box) {
+  const profile = document.createElement("div");
+  profile.className = "route-elevation";
+  profile.innerHTML = '<div class="route-elevation-loading">⌁</div>';
+  box.append(profile);
+
+  try {
+    const { sampleRoute, fetchElevations, elevationStats } = await import("./routing/elevation.js?v=20260928-1");
+    const samples = sampleRoute(route);
+    const elevated = await fetchElevations(samples);
+    if (!profile.isConnected) return;
+
+    const { points, ascent, descent } = elevationStats(elevated);
+    const valid = points.filter((p) => Number.isFinite(p.elevation));
+    if (valid.length < 2) throw Error("Elevation unavailable");
+
+    const width = 640, height = 104, padX = 3, padY = 10;
+    const totalDistance = Math.max(1, points.at(-1)?.distance || route.metadata.distanceMetres || 1);
+    const elevations = valid.map((p) => p.elevation);
+    const min = Math.min(...elevations), max = Math.max(...elevations);
+    const range = Math.max(12, max - min);
+
+    const x = d => padX + (d / totalDistance) * (width - padX * 2);
+    const y = e => height - padY - ((e - min) / range) * (height - padY * 2);
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", `Elevation profile. ${ascent} metres climbing and ${descent} metres descending.`);
+    svg.classList.add("route-elevation-svg");
+
+    const baseline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    baseline.setAttribute("x1", String(padX));
+    baseline.setAttribute("x2", String(width - padX));
+    baseline.setAttribute("y1", String(height - padY));
+    baseline.setAttribute("y2", String(height - padY));
+    baseline.setAttribute("class", "route-elevation-baseline");
+    svg.append(baseline);
+
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      if (!Number.isFinite(a.elevation) || !Number.isFinite(b.elevation)) continue;
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x(a.distance).toFixed(2));
+      line.setAttribute("y1", y(a.elevation).toFixed(2));
+      line.setAttribute("x2", x(b.distance).toFixed(2));
+      line.setAttribute("y2", y(b.elevation).toFixed(2));
+      const props = b.busy ? "busy" : b.kind === "road" ? "road" : b.kind === "walk-bike" ? "walk" : "path";
+      line.setAttribute("class", `route-elevation-line route-elevation-${props}${b.surface && b.surface !== "unknown" && !["asphalt","paved","concrete","concrete:plates","concrete:lanes"].includes(b.surface) ? " route-elevation-unsealed" : ""}`);
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = `${Math.round(b.distance)} m · ${Math.round(b.elevation)} m elevation · ${b.busy ? "busy road" : b.kind || "route"} · ${b.surface || "surface unknown"}`;
+      line.append(title);
+      svg.append(line);
+    }
+
+    const stats = document.createElement("div");
+    stats.className = "route-elevation-stats";
+    stats.innerHTML = `<span>↗ <strong>${ascent} m</strong></span><span>↘ <strong>${descent} m</strong></span>`;
+
+    const note = document.createElement("div");
+    note.className = "route-elevation-key";
+    note.innerHTML = '<span class="key-path">━</span><span class="key-road">━</span><span class="key-busy">━</span><span class="key-walk">┄</span>';
+
+    profile.replaceChildren(stats, svg, note);
+  } catch {
+    if (!profile.isConnected) return;
+    profile.innerHTML = '<div class="route-elevation-unavailable">Elevation unavailable</div>';
+  }
+}
+
 function renderCycleResult(route) {
   const box = $("#cycle-results");
   box.replaceChildren();
@@ -296,6 +366,7 @@ function renderCycleResult(route) {
   sections.append(sectionsSummary, list);
   details.append(detailsSummary, meta, sections);
   box.append(details);
+  renderElevationProfile(route, box);
 }
 $("#test-cycle-route").onclick = async () => {
   const request = ++routeRequest;
