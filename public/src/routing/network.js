@@ -1,4 +1,5 @@
 import { metres, withinBounds } from './cycle-policy.js?v=20260928-2';
+import { blockingTrailNoticeForWay } from './trail-notices.js?v=20260929-1';
 export const PROFILES = ['quiet', 'direct'];
 export function prepareNetwork(data) {
   if (data?.version !== 1 || !Array.isArray(data.nodes) || !data.nodes.length || data.nodes.length > 150000 || !Array.isArray(data.edges) || data.edges.length > 200000 || !Array.isArray(data.ways) || !Array.isArray(data.restrictions) || !Array.isArray(data.notices) || !/^\d{4}-\d{2}-\d{2}/.test(data.osmTimestamp)) throw Error('Invalid cycling network');
@@ -24,7 +25,10 @@ class Heap {
   push(item) { let i = this.items.length; this.items.push(item); while (i) { const p = (i-1)>>1; if(this.items[p].cost <= item.cost) break; this.items[i]=this.items[p]; i=p; } this.items[i]=item; }
   pop() { const root=this.items[0], last=this.items.pop(); if(this.items.length) { let i=0; while(i*2+1<this.items.length) { let c=i*2+1; if(c+1<this.items.length && this.items[c+1].cost<this.items[c].cost)c++; if(this.items[c].cost>=last.cost)break; this.items[i]=this.items[c];i=c; } this.items[i]=last; } return root; }
 }
-function usable(w, avoidBusy) { return !avoidBusy || !w.busy; }
+function usable(w, avoidBusy) {
+  if (blockingTrailNoticeForWay(w)) return false;
+  return !avoidBusy || !w.busy;
+}
 export function snapPoint(network, point, avoidBusy = false) {
   if (!withinBounds(point)) throw Error('Choose a point inside the Whakatipu coverage area.');
   let best = { distance: Infinity, index: -1 };
@@ -111,7 +115,7 @@ export function findRoute(network, from, to, { profile = 'quiet', avoidBusy = fa
     }
     lastWay=edge.way;
   }
-  return { type:'FeatureCollection', metadata:{ type:'network', start,end,profile,avoidBusy,distanceMetres:totals.path+totals.road+totals['walk-bike'],totals,snaps:[a.distance,b.distance],osmTimestamp:network.data.osmTimestamp,reviewedAt:network.data.reviewedAt,reviewAfter:network.data.reviewAfter,notices:network.data.notices },features };
+  return { type:'FeatureCollection', metadata:{ type:'network', start,end,profile,avoidBusy,trailClosuresApplied:true,distanceMetres:totals.path+totals.road+totals['walk-bike'],totals,snaps:[a.distance,b.distance],osmTimestamp:network.data.osmTimestamp,reviewedAt:network.data.reviewedAt,reviewAfter:network.data.reviewAfter,notices:network.data.notices },features };
 }
 let cached, pending;
 export async function loadNetwork(fetcher = fetch) {
