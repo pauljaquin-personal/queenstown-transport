@@ -1462,3 +1462,89 @@ dialog label {
     margin-bottom: 0 !important;
   }
 }
+
+
+/* Compact planned-route result */
+.route-result-summary {
+  margin-top: 10px;
+  padding: 10px 0 2px;
+}
+.route-result-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+}
+.route-result-primary strong {
+  font-size: 18px;
+}
+.route-result-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+.route-result-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid #dce4da;
+  border-radius: 999px;
+  background: #f8faf7;
+  font-size: 10px;
+}
+.route-result-chip strong {
+  font-size: 10px;
+}
+.route-result-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: #fff0de;
+  color: #713300;
+  font-size: 10px;
+  font-weight: 700;
+}
+.route-result-details {
+  margin-top: 10px;
+  font-size: 11px;
+}
+.route-result-details > summary,
+.route-sections > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.route-result-meta {
+  margin-top: 8px;
+}
+.route-result-meta p {
+  margin: 4px 0;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.route-sections {
+  margin-top: 8px;
+}
+.route-sections ol {
+  padding-left: 20px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.route-sections li {
+  padding: 4px 0;
+  font-size: 10px;
+  line-height: 1.35;
+}
+@media (max-width: 760px) {
+  .route-result-summary {
+    padding-top: 8px;
+  }
+  .route-result-chips {
+    gap: 6px;
+  }
+}
