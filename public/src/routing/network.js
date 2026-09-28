@@ -47,12 +47,22 @@ function turnAllowed(network, at, previous, incoming, edge) {
   }
   return true;
 }
-function cost(w, edge, profile) {
+const SH6_SHOTOVER_BRIDGE = [168.75818, -45.00143];
+function nearSh6ShotoverBridge(network, fromNode, edge) {
+  const a = network.data.nodes[fromNode]?.slice(1);
+  const b = network.data.nodes[edge.to]?.slice(1);
+  if (!a || !b) return false;
+  const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  return metres(midpoint, SH6_SHOTOVER_BRIDGE) < 260;
+}
+
+function cost(network, w, edge, fromNode, profile) {
   if (profile === 'direct') return edge.length;
 
   // Default profile is deliberately trail-first for everyday cycling.
-  // Roads remain available as connectors, but a longer mapped trail should
-  // normally beat a shorter traffic-exposed road route.
+  // The SH6 Shotover road bridge is strongly discouraged because the
+  // Queenstown Trail provides the normal cycling alternative upstream.
+  if (w.kind === 'road' && nearSh6ShotoverBridge(network, fromNode, edge)) return edge.length * 100;
   if (w.kind === 'walk-bike' || edge.walk) return edge.length * 6;
   if (w.busy) return edge.length * 14;
   if (w.kind === 'road') return edge.length * 4;
@@ -76,7 +86,7 @@ export function findRoute(network, from, to, { profile = 'quiet', avoidBusy = fa
     for (const edge of network.adjacent[current.node]) {
       const w = network.data.ways[edge.way];
       if (!usable(w, avoidBusy) || !turnAllowed(network, current.node, current.previous, current.incoming, edge)) continue;
-      const nextCost = current.cost + cost(w, edge, profile);
+      const nextCost = current.cost + cost(network, w, edge, current.node, profile);
       const key = `${edge.to}:${edge.way}:${current.node}`;
       if (nextCost >= (distances.get(key) ?? Infinity)) continue;
       distances.set(key, nextCost);
