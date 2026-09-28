@@ -215,17 +215,10 @@ async function useMyLocation(label, selector, restoreValue = "") {
     const point = await map.locate();
     if (!Array.isArray(point) || point.length < 2) throw Error("Location unavailable");
     picked[label] = point;
-    const select = $(selector);
-    let option = select.querySelector('[value="picked-' + label + '"]');
-    if (!option) {
-      option = document.createElement("option");
-      option.value = "picked-" + label;
-      select.append(option);
-    }
-    option.textContent = "My location";
-    select.value = option.value;
-    if (label === "start") lastRouteFrom = option.value;
-    if (label === "finish") lastRouteTo = option.value;
+    const value = "location:" + label;
+    $(selector).value = value;
+    if (label === "start") lastRouteFrom = value;
+    if (label === "finish") lastRouteTo = value;
     $("#pick-status").textContent = "";
     clearRoute();
   } catch {
@@ -480,7 +473,7 @@ $("#test-cycle-route").onclick = async () => {
       const { loadNetwork, findRoute } = await import("./routing/network.js?v=20260928-2");
       const network = await loadNetwork();
       if (request !== routeRequest) return;
-      const point = id => id.startsWith("picked-") ? picked[id.slice(7)] : ROUTE_PLACES.find(p => p[0] === id)?.slice(2);
+      const point = id => id.startsWith("picked-") ? picked[id.slice(7)] : id.startsWith("location:") ? picked[id.slice(9)] : ROUTE_PLACES.find(p => p[0] === id)?.slice(2);
       const route = findRoute(network, point(from), point(to), { profile: variant, avoidBusy: $("#avoid-busy").checked, start: $("#route-from").selectedOptions[0].textContent, end: $("#route-to").selectedOptions[0].textContent });
       map.showCycleRoute(route);
       renderCycleResult(route);
@@ -513,7 +506,7 @@ $("#test-cycle-route").onclick = async () => {
     $("#route-status").textContent = "Cycle route unavailable. The map and From/To controls still work. Try again.";
   }
 };
-$("#locate").onclick = () => map.locate();
+$("#locate").onclick = () => map.locate().catch(() => {});
 async function openCommute() {
   try {
     const { openCommuteDialog } = await import("./commute.js?v=20260924-1");
