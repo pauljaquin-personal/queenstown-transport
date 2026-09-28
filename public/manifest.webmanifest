@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Queenstown Transport",
-  "short_name": "QT Transport",
+  "name": "QueenstownGo",
+  "short_name": "QueenstownGo",
   "description": "Local transport options around Queenstown",
   "start_url": "/",
   "scope": "/",
