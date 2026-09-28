@@ -46,7 +46,7 @@ export function buildGpx(route, elevationPoints = null) {
   ).join("\n");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Queenstown Transport"
+<gpx version="1.1" creator="QueenstownGo"
   xmlns="http://www.topografix.com/GPX/1/1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
@@ -88,7 +88,7 @@ export async function shareOrDownloadGpx(route, elevationPoints = null) {
     try {
       await navigator.share({
         title:gpx.name,
-        text:"Cycling route from Queenstown Transport",
+        text:"Cycling route from QueenstownGo",
         files:[file],
       });
       return { method:"share", hasElevation:gpx.hasElevation };
