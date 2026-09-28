@@ -64,7 +64,7 @@ for (const mode of modes) {
   toggle.checked = enabled.has(mode.id);
   toggle.setAttribute(
     "aria-label",
-    `Show ${mode.name.toLowerCase()} landmarks on map`,
+    `Show ${mode.name.toLowerCase()} on map`,
   );
   toggle.onchange = () => {
     toggle.checked ? enabled.add(mode.id) : enabled.delete(mode.id);
@@ -312,10 +312,6 @@ $("#place").onchange = (event) => {
 $("#change-destination").onclick = () => {
   $("#place").focus();
   $("#place").scrollIntoView({ block: "center", behavior: "smooth" });
-};
-$("#reset").onclick = () => {
-  map.reset();
-  $("#place").value = "";
 };
 $("#locate").onclick = () => map.locate();
 $("#open-commute").onclick = async () => {
