@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260928-3"></script>
+    <script type="module" src="/src/app.js?v=20260928-4"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -34,18 +34,17 @@
       <section class="map-area" aria-label="Queenstown transport map">
         <div id="map"></div>
 
-        <section class="journey-search-card" aria-labelledby="journey-search-title">
-          <span class="eyebrow">GET AROUND WHAKATIPU</span>
-          <h1 id="journey-search-title">Where are you going?</h1>
+        <section class="journey-search-card" aria-label="Journey destination">
           <label class="sr-only" for="place">Choose a local destination</label>
-          <select id="place" class="destination-search">
-            <option value="">Search a place or destination…</option>
-          </select>
-          <p>Start with a destination. Cycling routes are available now; live bus, ferry and road comparisons will appear here as their feeds are connected.</p>
+          <div class="map-search-row">
+            <select id="place" class="destination-search">
+              <option value="">Search destination…</option>
+            </select>
+            <button id="locate" class="search-locate" aria-label="Show my location" title="My location">◎</button>
+          </div>
         </section>
 
         <div class="map-tools">
-          <button id="locate" aria-label="Show my location">◎ <span>My location</span></button>
           <button id="reset">↺ <span>Queenstown</span></button>
         </div>
         <div id="map-status" role="status">Map requires an internet connection.</div>
@@ -65,12 +64,16 @@
               <span class="tag">ROUTING LIVE</span>
             </div>
             <h3 id="cycle-route-title">Cycle journey</h3>
-            <div class="route-fields">
+            <div class="route-fields route-fields-single">
               <label for="route-from">From</label>
               <select id="route-from"></select>
-              <label for="route-to">To</label>
-              <select id="route-to"></select>
             </div>
+            <div class="selected-destination">
+              <span>To</span>
+              <strong id="journey-destination">Frankton · Gray Street</strong>
+              <button id="change-destination" type="button">Change</button>
+            </div>
+            <select id="route-to" class="sr-only" tabindex="-1" aria-hidden="true"></select>
             <div class="cycle-pin-buttons">
               <button id="pick-start" type="button">Pick start on map</button>
               <button id="pick-end" type="button">Pick finish on map</button>
