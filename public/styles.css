@@ -1622,3 +1622,29 @@ dialog label {
     margin-top: 8px;
   }
 }
+
+
+/* Route export */
+.route-result-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.route-export-button {
+  min-height: 36px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+.route-export-button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+@media (max-width: 760px) {
+  .route-result-actions {
+    margin-top: 5px;
+  }
+}
