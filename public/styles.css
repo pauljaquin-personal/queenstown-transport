@@ -1726,3 +1726,19 @@ dialog label {
     width: min(245px, calc(100vw - 20px));
   }
 }
+
+
+/* QueenstownGo header CTA */
+.header-commute {
+  margin-left: 0;
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .header-commute {
+    margin-left: auto;
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
