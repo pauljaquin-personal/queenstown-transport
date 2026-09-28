@@ -1,5 +1,26 @@
 import { places, modes } from "../api/catalog.js";
 export const QLDC_TRAILS_URL = "https://gis.qldc.govt.nz/server/rest/services/OpenSpaces/Parks_VIEWER/MapServer/57/query?where=CYCLE%3D%2701%27%20AND%20ASSTAT%3D%2702%27&outFields=OBJECTID%2CTRAILNME%2CCYCLEGRADE%2CSURFACE%2CCYCLE%2COPSTAT%2CACTIVETRVL%2CSUBTYPE%2CLENGTHM%2CCONFID&returnGeometry=true&outSR=4326&f=geojson";
+const NZTA_CLOSURES_URL = "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/1/query?where=impact%3D%27Road%20Closed%27&geometry=168.57%2C-45.13%2C169.04%2C-44.88&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&outSR=4326&f=geojson";
+const QLDC_NOTICE_DEFS = [
+  {
+    road:/^Templeton Way$/i,
+    title:"Queenstown Library 150th Celebration",
+    detail:"Templeton Way: Queenstown Squash Club to Boundary Street carpark · 8:00am–5:30pm, 28 Nov 2026.",
+  },
+  {
+    road:/^Coronet Peak Road$/i,
+    title:"Coronet Peak Hill Climb",
+    detail:"Upper Coronet Peak Road from Skippers Road · 8:00am–6:00pm, 28 Nov 2026.",
+  },
+];
+const TRAIL_NOTICE_DEFS = [
+  { match:/Arrow River Bridges/i, title:"Arrow River Bridges Trail", detail:"Closed between Tobins Bridge and Whitechapel Road." },
+  { match:/Lake Hayes/i, title:"Waiwhakaata Lake Hayes Trail", detail:"Partially open; the bridge at the northern end remains closed." },
+  { match:/Bush Creek/i, title:"Bush Creek", detail:"Closed." },
+  { match:/Frankton Track/i, title:"Frankton Track", detail:"2026 detour in place due to major infrastructure upgrades." },
+  { match:/Coronet Loop/i, title:"Coronet Loop", detail:"Closed for winter." },
+  { match:/Lower Shotover/i, title:"Lower Shotover Conservation Area", detail:"Flooded; check current trail notice before travelling." },
+];
 
 export function createMap(onStatus) {
   if (!window.L) {
@@ -57,6 +78,7 @@ export function createMap(onStatus) {
   });
   let trailsLoaded = false;
   let trailsLoading;
+  let trailData;
   async function ensureTrails() {
     if (trailsLoaded) return true;
     if (trailsLoading) return trailsLoading;
@@ -68,6 +90,7 @@ export function createMap(onStatus) {
         const data = await response.json();
         if (data.error || !Array.isArray(data.features)) throw new Error("Unexpected QLDC response");
         trails.addData(data);
+        trailData = data;
         trailsLoaded = true;
         onStatus("QLDC cycle network · " + data.features.length + " trail segments loaded");
         return true;
@@ -79,6 +102,127 @@ export function createMap(onStatus) {
     })();
     return trailsLoading;
   }
+  let nztaClosures;
+  let qldcClosures;
+  let trailClosures;
+  let nztaLoaded = false;
+  let qldcLoaded = false;
+  let trailClosuresLoaded = false;
+
+  function appendLine(div, label, value) {
+    if (value === null || value === undefined || value === "") return;
+    div.append(document.createElement("br"), document.createTextNode(label + value));
+  }
+
+  async function ensureNztaClosures() {
+    if (nztaLoaded) return true;
+    try {
+      onStatus("Loading live NZTA road closures…");
+      const response = await fetch(NZTA_CLOSURES_URL, { headers:{ Accept:"application/geo+json,application/json" } });
+      if (!response.ok) throw Error("NZTA returned " + response.status);
+      const data = await response.json();
+      if (!Array.isArray(data.features)) throw Error("Unexpected NZTA response");
+      nztaClosures = L.geoJSON(data, {
+        style:{ color:"#c1272d", weight:7, opacity:.9, dashArray:"10 7" },
+        onEachFeature(feature, layer) {
+          const p = feature.properties || {};
+          const div = document.createElement("div");
+          const strong = document.createElement("strong");
+          strong.textContent = p.locationArea || p.eventDescription || "NZTA road closure";
+          div.append(strong);
+          appendLine(div, "", p.eventDescription && p.eventDescription !== strong.textContent ? p.eventDescription : "");
+          appendLine(div, "Impact: ", p.impact);
+          appendLine(div, "Restrictions: ", p.restrictions);
+          appendLine(div, "Alternative: ", p.alternativeRoute);
+          const note = document.createElement("small");
+          note.textContent = "Source: NZTA Highway Information · live verified road event.";
+          div.append(document.createElement("br"), note);
+          layer.bindPopup(div);
+        },
+      });
+      nztaLoaded = true;
+      onStatus("NZTA live road closures · " + data.features.length + " in Whakatipu coverage");
+      return true;
+    } catch (error) {
+      console.warn("NZTA closures unavailable", error);
+      onStatus("NZTA closures are temporarily unavailable.");
+      return false;
+    }
+  }
+
+  async function ensureQldcClosures() {
+    if (qldcLoaded) return true;
+    try {
+      onStatus("Loading QLDC road-closure notices…");
+      const response = await fetch("/data/cycle-network.v1.json");
+      if (!response.ok) throw Error("Routing snapshot unavailable");
+      const data = await response.json();
+      qldcClosures = L.layerGroup();
+
+      for (const notice of QLDC_NOTICE_DEFS) {
+        const wayIndexes = new Set();
+        data.ways.forEach((way, index) => { if (notice.road.test(way.name || "")) wayIndexes.add(index); });
+        const points = [];
+        for (const [a,b,w] of data.edges) {
+          if (!wayIndexes.has(w)) continue;
+          points.push(data.nodes[a].slice(1), data.nodes[b].slice(1));
+        }
+        if (!points.length) continue;
+        const middle = points[Math.floor(points.length / 2)];
+        const div = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = notice.title;
+        div.append(strong, document.createElement("br"), document.createTextNode(notice.detail));
+        const note = document.createElement("small");
+        note.textContent = "Source: QLDC scheduled-event road-closure notice · marker is approximate road location.";
+        div.append(document.createElement("br"), note);
+        L.circleMarker([middle[1], middle[0]], {
+          radius:8, color:"#8f5b36", weight:3, fillColor:"#fff", fillOpacity:1,
+        }).bindPopup(div).addTo(qldcClosures);
+      }
+      qldcLoaded = true;
+      onStatus("QLDC scheduled road-closure notices loaded");
+      return true;
+    } catch (error) {
+      console.warn("QLDC closure notices unavailable", error);
+      onStatus("QLDC closure notices are temporarily unavailable.");
+      return false;
+    }
+  }
+
+  async function ensureTrailClosures() {
+    if (trailClosuresLoaded) return true;
+    const ok = await ensureTrails();
+    if (!ok || !trailData) return false;
+    const features = [];
+    for (const feature of trailData.features) {
+      const name = feature?.properties?.TRAILNME || "";
+      const notice = TRAIL_NOTICE_DEFS.find(item => item.match.test(name));
+      if (!notice) continue;
+      features.push({
+        ...feature,
+        properties:{ ...feature.properties, closureTitle:notice.title, closureDetail:notice.detail },
+      });
+    }
+    trailClosures = L.geoJSON({ type:"FeatureCollection", features }, {
+      style:{ color:"#b83232", weight:7, opacity:.9, dashArray:"9 7" },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const div = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = p.closureTitle || p.TRAILNME || "Trail notice";
+        div.append(strong, document.createElement("br"), document.createTextNode(p.closureDetail || "Check current Queenstown Trail notice."));
+        const note = document.createElement("small");
+        note.textContent = "Source: Queenstown Trails notice + QLDC mapped trail geometry. Whole named trail may be highlighted where the notice affects only part.";
+        div.append(document.createElement("br"), note);
+        layer.bindPopup(div);
+      },
+    });
+    trailClosuresLoaded = true;
+    onStatus("Queenstown Trail closure notices · " + features.length + " mapped sections");
+    return true;
+  }
+
   let cycleRoute;
   let cycleNetwork;
   let pickCallback;
@@ -130,6 +274,22 @@ export function createMap(onStatus) {
         const ok = await ensureTrails();
         if (ok && !map.hasLayer(trails)) trails.addTo(map);
       } else if (map.hasLayer(trails)) map.removeLayer(trails);
+
+      if (enabled.has("nzta-closures")) {
+        const ok = await ensureNztaClosures();
+        if (ok && nztaClosures && !map.hasLayer(nztaClosures)) nztaClosures.addTo(map);
+      } else if (nztaClosures && map.hasLayer(nztaClosures)) map.removeLayer(nztaClosures);
+
+      if (enabled.has("qldc-closures")) {
+        const ok = await ensureQldcClosures();
+        if (ok && qldcClosures && !map.hasLayer(qldcClosures)) qldcClosures.addTo(map);
+      } else if (qldcClosures && map.hasLayer(qldcClosures)) map.removeLayer(qldcClosures);
+
+      if (enabled.has("trail-closures")) {
+        const ok = await ensureTrailClosures();
+        if (ok && trailClosures && !map.hasLayer(trailClosures)) trailClosures.addTo(map);
+      } else if (trailClosures && map.hasLayer(trailClosures)) map.removeLayer(trailClosures);
+
       if (enabled.has("community"))
         for (const report of reports) {
           const place = places.find((p) => p.id === report.placeId);
