@@ -18,18 +18,32 @@ for (const [id, name] of ROUTE_PLACES) {
 }
 $("#route-from").value = "queenstown";
 $("#route-to").value = "frankton";
+$("#journey-destination").textContent = $("#route-to").selectedOptions[0]?.textContent || "Frankton";
 function toast(text) {
   $("#toast").textContent = text;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => ($("#toast").textContent = ""), 5500);
 }
-for (const place of places)
-  for (const selector of ["#place", "#report-place"]) {
-    const option = document.createElement("option");
-    option.value = place.id;
-    option.textContent = place.name;
-    $(selector).append(option);
-  }
+for (const place of places) {
+  const searchOption = document.createElement("option");
+  searchOption.value = place.id;
+  searchOption.textContent = place.name;
+  $("#place").append(searchOption);
+
+  const reportOption = document.createElement("option");
+  reportOption.value = place.id;
+  reportOption.textContent = place.name;
+  $("#report-place").append(reportOption);
+}
+const existingSearchLabels = new Set([...$("#place").options].map((option) => option.textContent));
+for (const [id, name] of ROUTE_PLACES) {
+  const baseName = name.split(" · ")[0];
+  if (existingSearchLabels.has(baseName) || [...$("#place").options].some((option) => option.textContent.startsWith(baseName))) continue;
+  const option = document.createElement("option");
+  option.value = `route:${id}`;
+  option.textContent = baseName;
+  $("#place").append(option);
+}
 for (const mode of modes) {
   const row = document.createElement("div");
   row.className = "layer-row";
@@ -133,7 +147,11 @@ function clearRoute() {
   $("#route-status").textContent = "Choose Show route to display the selected journey.";
 }
 $("#route-from").onchange = clearRoute;
-$("#route-to").onchange = clearRoute;
+$("#route-to").onchange = () => {
+  const selectedText = $("#route-to").selectedOptions[0]?.textContent || "Choose destination";
+  $("#journey-destination").textContent = selectedText;
+  clearRoute();
+};
 $("#route-variant").onchange = () => {
   const legacy = !["quiet", "direct"].includes($("#route-variant").value);
   $("#avoid-busy").disabled = legacy;
@@ -250,22 +268,46 @@ $("#test-cycle-route").onclick = async () => {
   }
 };
 $("#place").onchange = (event) => {
-  const place = places.find((p) => p.id === event.target.value);
-  if (!place) return;
-  map.focus(place);
+  const value = event.target.value;
+  if (!value) return;
+
   const destinationMap = {
     town: "queenstown",
     frankton: "frankton",
     arrowtown: "arrowtown",
     kelvin: "kelvin-heights",
+    airport: "frankton",
+    marina: "frankton",
   };
-  const routeDestination = destinationMap[place.id];
+
+  let routeDestination = destinationMap[value];
+  let displayName = "";
+  const place = places.find((p) => p.id === value);
+
+  if (place) {
+    map.focus(place);
+    displayName = place.name;
+  } else if (value.startsWith("route:")) {
+    routeDestination = value.slice(6);
+    const routePlace = ROUTE_PLACES.find((item) => item[0] === routeDestination);
+    if (routePlace) {
+      displayName = routePlace[1];
+      map.focus({ lat: routePlace[3], lng: routePlace[2] });
+    }
+  }
+
   if (routeDestination && $("#route-to").querySelector(`option[value="${routeDestination}"]`)) {
     $("#route-to").value = routeDestination;
+    $("#journey-destination").textContent =
+      $("#route-to").selectedOptions[0]?.textContent || displayName || "Selected destination";
     clearRoute();
-    $("#route-status").textContent = `${place.name} selected as your cycling destination. Choose a start point, then Find cycle route.`;
-    $("#route-to").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    $("#route-status").textContent =
+      `${displayName || $("#journey-destination").textContent} selected as your destination. Choose where you are starting, then Find cycle route.`;
   }
+};
+$("#change-destination").onclick = () => {
+  $("#place").focus();
+  $("#place").scrollIntoView({ block: "center", behavior: "smooth" });
 };
 $("#reset").onclick = () => {
   map.reset();
