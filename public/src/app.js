@@ -1,6 +1,6 @@
 import { places, modes, CYCLE_PLACES as ROUTE_PLACES } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260929-3";
+import { createMap } from "./map/map.js?v=20260929-4";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
