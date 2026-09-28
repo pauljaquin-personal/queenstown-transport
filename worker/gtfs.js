@@ -71,7 +71,7 @@ export async function queenstownGtfs() {
   const texts=Object.fromEntries(await Promise.all(names.map(async n=>[n,await unzipText(buffer,entries,n)])));
   const agencies=csv(texts["agency.txt"]);
   const routes=csv(texts["routes.txt"]);
-  const qtnAgencyIds=new Set(agencies.filter(a=>/queenstown|orbus/i.test((a.agency_name||"")+" "+(a.agency_url||""))).map(a=>a.agency_id));
+  const qtnAgencyIds=new Set(agencies.filter(a=>String(a.agency_id||"").toUpperCase()==="QTN" || /queenstown/i.test((a.agency_name||"")+" "+(a.agency_url||""))).map(a=>a.agency_id));
   let qRoutes=routes.filter(r=>qtnAgencyIds.has(r.agency_id) && ["1","2","3","4","5"].includes(routeNumber(r)));
   if (!qRoutes.length) qRoutes=routes.filter(r=>["1","2","3","4","5"].includes(routeNumber(r)) && /queenstown|arrowtown|sunshine|kelvin|jacks|lake hayes|remarkables|quail/i.test((r.route_long_name||"")+" "+(r.route_desc||"")));
   const routeIds=new Set(qRoutes.map(r=>r.route_id));
