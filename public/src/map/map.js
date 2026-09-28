@@ -1,4 +1,5 @@
 import { places, modes } from "../api/catalog.js";
+import { TRAIL_NOTICES, trailNoticeForMapName } from "../routing/trail-notices.js?v=20260929-1";
 export const QLDC_TRAILS_URL = "https://gis.qldc.govt.nz/server/rest/services/OpenSpaces/Parks_VIEWER/MapServer/57/query?where=CYCLE%3D%2701%27%20AND%20ASSTAT%3D%2702%27&outFields=OBJECTID%2CTRAILNME%2CCYCLEGRADE%2CSURFACE%2CCYCLE%2COPSTAT%2CACTIVETRVL%2CSUBTYPE%2CLENGTHM%2CCONFID&returnGeometry=true&outSR=4326&f=geojson";
 const NZTA_CLOSURES_URL = "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/1/query?where=impact%3D%27Road%20Closed%27&geometry=168.57%2C-45.13%2C169.04%2C-44.88&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&outSR=4326&f=geojson";
 const QLDC_NOTICE_DEFS = [
@@ -12,14 +13,6 @@ const QLDC_NOTICE_DEFS = [
     title:"Coronet Peak Hill Climb",
     detail:"Upper Coronet Peak Road from Skippers Road · 8:00am–6:00pm, 28 Nov 2026.",
   },
-];
-const TRAIL_NOTICE_DEFS = [
-  { match:/Arrow River Bridges/i, title:"Arrow River Bridges Trail", detail:"Closed between Tobins Bridge and Whitechapel Road." },
-  { match:/Lake Hayes/i, title:"Waiwhakaata Lake Hayes Trail", detail:"Partially open; the bridge at the northern end remains closed." },
-  { match:/Bush Creek/i, title:"Bush Creek", detail:"Closed." },
-  { match:/Frankton Track/i, title:"Frankton Track", detail:"2026 detour in place due to major infrastructure upgrades." },
-  { match:/Coronet Loop/i, title:"Coronet Loop", detail:"Closed for winter." },
-  { match:/Lower Shotover/i, title:"Lower Shotover Conservation Area", detail:"Flooded; check current trail notice before travelling." },
 ];
 
 export function createMap(onStatus) {
@@ -197,11 +190,11 @@ export function createMap(onStatus) {
     const features = [];
     for (const feature of trailData.features) {
       const name = feature?.properties?.TRAILNME || "";
-      const notice = TRAIL_NOTICE_DEFS.find(item => item.match.test(name));
+      const notice = trailNoticeForMapName(name);
       if (!notice) continue;
       features.push({
         ...feature,
-        properties:{ ...feature.properties, closureTitle:notice.title, closureDetail:notice.detail },
+        properties:{ ...feature.properties, closureTitle:notice.title, closureDetail:notice.detail, routing:notice.routing },
       });
     }
     trailClosures = L.geoJSON({ type:"FeatureCollection", features }, {
@@ -213,7 +206,9 @@ export function createMap(onStatus) {
         strong.textContent = p.closureTitle || p.TRAILNME || "Trail notice";
         div.append(strong, document.createElement("br"), document.createTextNode(p.closureDetail || "Check current Queenstown Trail notice."));
         const note = document.createElement("small");
-        note.textContent = "Source: Queenstown Trails notice + QLDC mapped trail geometry. Whole named trail may be highlighted where the notice affects only part.";
+        note.textContent = p.routing === "block"
+          ? "Source: Queenstown Trails notice + QLDC mapped trail geometry. This notice also blocks matching trail segments in QueenstownGo routing."
+          : "Source: Queenstown Trails notice + QLDC mapped trail geometry. This notice is shown as a warning only because precise closure geometry is not yet available.";
         div.append(document.createElement("br"), note);
         layer.bindPopup(div);
       },
