@@ -1219,3 +1219,61 @@ dialog label {
     margin-top: 6px;
   }
 }
+
+
+/* Matched journey controls */
+.journey-section {
+  padding-top: 18px;
+}
+.route-location-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+.route-location-row label,
+.route-location-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #183c34;
+}
+.route-location-control {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid #dce3da;
+  border-radius: 9px;
+  background: #fff;
+  color: #25483d;
+  font-size: 12px;
+  font-weight: 600;
+}
+.route-location-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+}
+.route-location-button:hover {
+  background: #f7faf6;
+}
+.route-plan-button {
+  width: 100% !important;
+  min-height: 46px;
+  margin: 10px 0 2px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .journey-section {
+    padding-top: 16px;
+  }
+  .route-prototype {
+    margin-top: 0;
+  }
+}
