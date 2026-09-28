@@ -1,6 +1,6 @@
 import { places, modes, CYCLE_PLACES as ROUTE_PLACES } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260928-2";
+import { createMap } from "./map/map.js?v=20260928-3";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
@@ -16,6 +16,11 @@ for (const [id, name] of ROUTE_PLACES) {
     $(selector).append(option);
   }
 }
+const locationStartOption = document.createElement("option");
+locationStartOption.value = "location:start";
+locationStartOption.textContent = "My location";
+$("#route-from").append(locationStartOption);
+
 const pickStartOption = document.createElement("option");
 pickStartOption.value = "pick:start";
 pickStartOption.textContent = "Pick on map…";
@@ -34,6 +39,11 @@ for (const place of places) {
   reportOption.textContent = place.name;
   $("#report-place").append(reportOption);
 }
+const locationFinishOption = document.createElement("option");
+locationFinishOption.value = "location:finish";
+locationFinishOption.textContent = "My location";
+$("#route-to").append(locationFinishOption);
+
 const pickFinishOption = document.createElement("option");
 pickFinishOption.value = "pick:finish";
 pickFinishOption.textContent = "Pick on map…";
@@ -166,6 +176,10 @@ function clearRoute() {
 }
 let lastRouteFrom = "queenstown";
 $("#route-from").onchange = () => {
+  if ($("#route-from").value === "location:start") {
+    useMyLocation("start", "#route-from", lastRouteFrom);
+    return;
+  }
   if ($("#route-from").value === "pick:start") {
     beginMapPick("start", "#route-from", lastRouteFrom);
     return;
@@ -175,6 +189,10 @@ $("#route-from").onchange = () => {
 };
 let lastRouteTo = "frankton";
 $("#route-to").onchange = () => {
+  if ($("#route-to").value === "location:finish") {
+    useMyLocation("finish", "#route-to", lastRouteTo);
+    return;
+  }
   if ($("#route-to").value === "pick:finish") {
     beginMapPick("finish", "#route-to", lastRouteTo);
     return;
@@ -190,6 +208,32 @@ $("#route-variant").onchange = () => {
 $("#avoid-busy").onchange = clearRoute;
 const picked = {};
 let activePick = null;
+async function useMyLocation(label, selector, restoreValue = "") {
+  clearRoute();
+  $("#pick-status").textContent = "Finding your location…";
+  try {
+    const point = await map.locate();
+    if (!Array.isArray(point) || point.length < 2) throw Error("Location unavailable");
+    picked[label] = point;
+    const select = $(selector);
+    let option = select.querySelector('[value="picked-' + label + '"]');
+    if (!option) {
+      option = document.createElement("option");
+      option.value = "picked-" + label;
+      select.append(option);
+    }
+    option.textContent = "My location";
+    select.value = option.value;
+    if (label === "start") lastRouteFrom = option.value;
+    if (label === "finish") lastRouteTo = option.value;
+    $("#pick-status").textContent = "";
+    clearRoute();
+  } catch {
+    $(selector).value = restoreValue;
+    $("#pick-status").textContent = "Location unavailable. Choose a place or pick on map.";
+  }
+}
+
 function beginMapPick(label, selector, restoreValue = "") {
   clearRoute();
   activePick = { label, selector, restoreValue };
@@ -470,7 +514,7 @@ $("#test-cycle-route").onclick = async () => {
   }
 };
 $("#locate").onclick = () => map.locate();
-$("#open-commute").onclick = async () => {
+async function openCommute() {
   try {
     const { openCommuteDialog } = await import("./commute.js?v=20260924-1");
     openCommuteDialog({ dialog: $("#commute-dialog"), toast });
@@ -478,7 +522,9 @@ $("#open-commute").onclick = async () => {
     console.warn("My Commute unavailable", error);
     toast("My Commute is temporarily unavailable. The map still works.");
   }
-};
+}
+$("#open-commute").onclick = openCommute;
+$("#open-commute-header").onclick = openCommute;
 $("#open-report").onclick = () => $("#report-dialog").showModal();
 $("#about").onclick = () => $("#about-dialog").showModal();
 for (const close of document.querySelectorAll("[data-close]"))
@@ -508,11 +554,13 @@ window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;
 });
-$("#install").onclick = async () => {
+$("#install-about").onclick = async () => {
   if (deferredInstall) {
     await deferredInstall.prompt();
     deferredInstall = null;
-  } else $("#about-dialog").showModal();
+  } else {
+    $("#install-help").scrollIntoView({ block:"center", behavior:"smooth" });
+  }
 };
 window.addEventListener("offline", () => {
   $("#map-status").textContent =
