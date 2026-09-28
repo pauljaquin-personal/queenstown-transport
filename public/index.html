@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260929-2"></script>
+    <script type="module" src="/src/app.js?v=20260929-3"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -35,8 +35,8 @@
         <div id="map"></div>
 
         <div class="map-layers-control">
-          <button id="map-layers-button" class="map-layers-button" type="button" aria-expanded="false" aria-controls="map-layers-panel">
-            <span aria-hidden="true">▱</span><span>Layers</span>
+          <button id="map-layers-button" class="map-layers-button" type="button" aria-expanded="false" aria-controls="map-layers-panel" aria-label="Map layers" title="Map layers">
+            <span aria-hidden="true">▱</span>
           </button>
           <div id="map-layers-panel" class="map-layers-panel" hidden>
             <div class="map-layers-heading">
@@ -68,12 +68,6 @@
             <label class="cycle-check route-advanced-option"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
             <p id="network-status" role="status"></p>
             <button id="test-cycle-route" class="primary journey-action route-plan-button" type="button">🚲 <span>Plan</span></button>
-            <select id="route-variant" class="route-preference" aria-label="Route preference">
-              <option value="quiet" selected>Prefer paths &amp; quieter roads</option>
-              <option value="direct">Shorter route</option>
-              <option value="detour">2026 detour — partial map</option>
-              <option value="normal">Normal trail — closed sections</option>
-            </select>
             <p id="route-status" class="sr-only" role="status">Ready to route.</p>
             <div id="cycle-results"></div>
             <details class="cycle-notices">
