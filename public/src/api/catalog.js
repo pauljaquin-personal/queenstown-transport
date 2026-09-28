@@ -1,4 +1,4 @@
-// Orientation landmarks only: no route geometry or live status is inferred.
+// Approximate reference places; no live status is inferred.
 export const places = [
   {
     id: "town",
@@ -80,7 +80,7 @@ export const modes = [
     status: "OFFICIAL LINKS",
     title: "Make room for the bus",
     description:
-      "Find Queenstown bus routes, timetables and alerts from Orbus. Map dots are local landmarks, not bus stops. Live vehicles and arrivals are not connected.",
+      "Find Queenstown bus routes, timetables and alerts from Orbus. Map points are approximate local reference locations, not verified bus stops. Live vehicles and arrivals are not connected.",
     links: [
       [
         "Orbus timetables & alerts",
