@@ -48,26 +48,21 @@
       </section>
 
       <aside id="explore" class="journey-panel">
-        <section class="panel-section journey-section" aria-labelledby="journey-title">
-          <div class="section-heading">
-            <span class="eyebrow">JOURNEY</span>
-            <h2 id="journey-title">Plan your trip</h2>
-            <p>Choose where you are travelling from and to.</p>
-          </div>
-
+        <section class="panel-section journey-section" aria-label="Journey planner">
           <section class="route-prototype" aria-label="Route planner">
             <div class="mode-heading compact-mode-heading">
               <span class="mode-icon-only" aria-hidden="true">🚲</span>
               <span class="tag">ROUTING LIVE</span>
             </div>
-            <div class="route-fields route-fields-single">
+            <div class="route-location-row">
               <label for="route-from">From</label>
-              <select id="route-from"></select>
+              <select id="route-from" class="route-location-control"></select>
             </div>
-            <div class="selected-destination">
-              <span>To</span>
-              <strong id="journey-destination">Frankton · Gray Street</strong>
-              <button id="change-destination" type="button">Change</button>
+            <div class="route-location-row">
+              <span class="route-location-label">To</span>
+              <button id="change-destination" class="route-location-control route-location-button" type="button">
+                <span id="journey-destination">Frankton · Gray Street</span>
+              </button>
             </div>
             <select id="route-to" class="sr-only" tabindex="-1" aria-hidden="true"></select>
             <button id="cancel-pick" class="cancel-map-pick" type="button" hidden>Cancel map pick</button>
@@ -81,7 +76,7 @@
             <label class="cycle-check"><input id="avoid-busy" type="checkbox"> Exclude busy roads</label>
             <label class="cycle-check"><input id="cycle-network-toggle" type="checkbox"> Show available roads &amp; paths</label>
             <p id="network-status" role="status"></p>
-            <button id="test-cycle-route" class="primary journey-action route-icon-button" type="button" aria-label="Find route" title="Find route">→</button>
+            <button id="test-cycle-route" class="primary journey-action route-plan-button" type="button">🚲 <span>Plan</span></button>
             <p id="route-status" class="sr-only" role="status">Ready to route.</p>
             <div id="cycle-results"></div>
             <details class="cycle-notices">
