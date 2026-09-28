@@ -9,6 +9,45 @@ const json = (data, status=200) => new Response(JSON.stringify(data), {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/elevation" && request.method === "POST") {
+      const length = Number(request.headers.get("content-length") || 0);
+      if (length > 20000) return json({ ok:false, error:"Request too large." }, 413);
+      let body;
+      try { body = await request.json(); } catch { return json({ ok:false, error:"Invalid JSON." }, 400); }
+      const locations = Array.isArray(body?.locations) ? body.locations : [];
+      if (!locations.length || locations.length > 120) return json({ ok:false, error:"Provide 1–120 locations." }, 400);
+      const cleaned = [];
+      for (const point of locations) {
+        if (!Array.isArray(point) || point.length !== 2) return json({ ok:false, error:"Invalid location." }, 400);
+        const [lng, lat] = point.map(Number);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -48 || lat > -34 || lng < 166 || lng > 179.9) {
+          return json({ ok:false, error:"Location outside supported NZ bounds." }, 400);
+        }
+        cleaned.push([lng, lat]);
+      }
+      const payload = {
+        locations: cleaned.map(([lng, lat]) => `${lat.toFixed(6)},${lng.toFixed(6)}`).join("|"),
+        interpolation: "bilinear",
+      };
+      try {
+        const upstream = await fetch("https://api.opentopodata.org/v1/nzdem8m", {
+          method:"POST",
+          headers:{ "content-type":"application/json" },
+          body:JSON.stringify(payload),
+          signal:AbortSignal.timeout(12000),
+        });
+        if (!upstream.ok) return json({ ok:false, error:"Elevation service unavailable." }, 502);
+        const data = await upstream.json();
+        if (data?.status !== "OK" || !Array.isArray(data.results)) return json({ ok:false, error:"Elevation lookup failed." }, 502);
+        return json({
+          ok:true,
+          dataset:"nzdem8m",
+          elevations:data.results.map((item) => Number.isFinite(item?.elevation) ? item.elevation : null),
+        });
+      } catch {
+        return json({ ok:false, error:"Elevation service unavailable." }, 502);
+      }
+    }
     if (url.pathname === "/api/commutes" && request.method === "POST") {
       if (!env.COMMUTES) return json({ ok:false, error:"storage_not_configured" }, 503);
       const length = Number(request.headers.get("content-length") || 0);
