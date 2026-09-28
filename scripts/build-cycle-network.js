@@ -9,6 +9,9 @@ const namePatterns = exclusions.blockedNamePatterns.map(p => new RegExp(p, 'i'))
 for (const e of source.elements) {
   if (e.type === 'node') nodeTags.set(e.id, e.tags || {});
   if (e.type !== 'relation') continue;
+  if (exclusions.blockedRelations.includes(e.id)) {
+    console.log('BLOCKED_RELATION', e.id, e.tags?.name || '(unnamed)', e.tags?.route || e.tags?.type || '');
+  }
   if (e.tags?.route === 'bicycle') for (const m of e.members.filter(m => m.type === 'way')) {
     if (exclusions.blockedRelations.includes(e.id)) blocked.add(m.ref);
     if (e.tags.name && !['Wanaka Queenstown Tour Aotearoa', 'Southern Way 1000'].includes(e.tags.name)) {
