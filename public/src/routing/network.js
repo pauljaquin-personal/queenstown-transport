@@ -48,9 +48,18 @@ function turnAllowed(network, at, previous, incoming, edge) {
   return true;
 }
 function cost(w, edge, profile) {
-  if (w.kind === 'walk-bike' || edge.walk) return edge.length * 5;
   if (profile === 'direct') return edge.length;
-  return edge.length * (w.busy ? 7 : w.kind === 'road' ? 1.7 : w.rough ? 1.15 : 1);
+
+  // Default profile is deliberately trail-first for everyday cycling.
+  // Roads remain available as connectors, but a longer mapped trail should
+  // normally beat a shorter traffic-exposed road route.
+  if (w.kind === 'walk-bike' || edge.walk) return edge.length * 6;
+  if (w.busy) return edge.length * 14;
+  if (w.kind === 'road') return edge.length * 4;
+
+  const cycleNetworkBonus = w.networks.length ? 0.72 : 1;
+  const surfacePenalty = w.rough ? 1.12 : 1;
+  return edge.length * cycleNetworkBonus * surfacePenalty;
 }
 export function findRoute(network, from, to, { profile = 'quiet', avoidBusy = false, start = 'Start', end = 'Destination' } = {}) {
   if (!PROFILES.includes(profile)) throw Error('Unknown cycling preference');
