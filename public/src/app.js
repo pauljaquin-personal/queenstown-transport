@@ -412,7 +412,8 @@ function renderCycleResult(route) {
   shortest.onchange = () => planCycleRoute(shortest.checked ? "direct" : "quiet");
   shortestLabel.append(shortest, document.createTextNode(" Shortest route"));
 
-  actions.append(shortestLabel, exportButton);
+  distance.append(exportButton);
+  actions.append(shortestLabel);
 
   box.append(summary, actions);
 
@@ -423,41 +424,33 @@ function renderCycleResult(route) {
     box.append(warning);
   }
 
-  const details = document.createElement("details");
-  details.className = "route-result-details";
-  const detailsSummary = document.createElement("summary");
-  detailsSummary.textContent = "Details";
-
-  const meta = document.createElement("div");
-  meta.className = "route-result-meta";
-  meta.innerHTML = `
-    <p><span aria-hidden="true">📍</span> Start/end snap: ${Math.round(m.snaps[0])} m / ${Math.round(m.snaps[1])} m</p>
-    <p><span aria-hidden="true">◌</span> Unknown surface: ${km(m.totals.unknownSurface)}</p>
-    <p><span aria-hidden="true">🗓</span> OSM ${m.osmTimestamp.slice(0,10)} · closures ${m.reviewedAt}</p>
-    <p><span aria-hidden="true">⛰</span> Gradient not yet assessed</p>
-  `;
-  if (new Date().toISOString().slice(0,10) > m.reviewAfter) {
-    const stale = document.createElement("p");
-    stale.innerHTML = '<span aria-hidden="true">⚠</span> Closure review due';
-    meta.append(stale);
-  }
-
   const sections = document.createElement("details");
   sections.className = "route-sections";
   const sectionsSummary = document.createElement("summary");
   sectionsSummary.textContent = "Route sections";
   const list = document.createElement("ol");
+
+  const namedSections = [];
   for (const feature of route.features) {
-    const item = document.createElement("li");
     const p = feature.properties;
-    const kindIcon = p.kind === "walk-bike" ? "🚶" : p.busy ? "⚠" : p.kind === "road" ? "🛣" : "🛤";
-    item.textContent = `${kindIcon} ${p.name} · ${km(p.metres)}${p.networks.length ? " · " + p.networks.join(", ") : ""}`;
+    const name = (p.name || "").trim() || (p.kind === "road" ? "Unnamed road" : "Trail");
+    const previous = namedSections.at(-1);
+    if (previous && previous.name === name) {
+      previous.metres += p.metres;
+    } else {
+      namedSections.push({ name, metres:p.metres });
+    }
+  }
+
+  for (const section of namedSections) {
+    const item = document.createElement("li");
+    item.innerHTML = `<span>${section.name}</span><strong>${km(section.metres)}</strong>`;
     list.append(item);
   }
+
   sections.append(sectionsSummary, list);
-  details.append(detailsSummary, meta, sections);
   renderElevationProfile(route, box);
-  box.append(details);
+  box.append(sections);
 }
 async function planCycleRoute(profile = "quiet") {
   const request = ++routeRequest;
