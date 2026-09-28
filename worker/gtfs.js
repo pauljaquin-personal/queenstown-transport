@@ -78,9 +78,22 @@ export async function queenstownGtfs() {
   const trips=csv(texts["trips.txt"]).filter(t=>routeIds.has(t.route_id));
   const tripIds=new Set(trips.map(t=>t.trip_id));
   const shapeIds=new Set(trips.map(t=>t.shape_id).filter(Boolean));
-  const stopIds=new Set(csv(texts["stop_times.txt"]).filter(s=>tripIds.has(s.trip_id)).map(s=>s.stop_id));
+  const stopTimes=csv(texts["stop_times.txt"]).filter(s=>tripIds.has(s.trip_id));
+  const stopIds=new Set(stopTimes.map(s=>s.stop_id));
+  const tripRoute=new Map(trips.map(t=>[t.trip_id,t.route_id]));
+  const stopRouteIds=new Map();
+  for (const s of stopTimes) {
+    const routeId=tripRoute.get(s.trip_id);
+    if (!routeId) continue;
+    if (!stopRouteIds.has(s.stop_id)) stopRouteIds.set(s.stop_id,new Set());
+    stopRouteIds.get(s.stop_id).add(routeId);
+  }
+  const routeById=new Map(qRoutes.map(r=>[r.route_id,r]));
   const stops=csv(texts["stops.txt"]).filter(s=>stopIds.has(s.stop_id)).map(s=>({
-    id:s.stop_id,name:s.stop_name,lat:Number(s.stop_lat),lng:Number(s.stop_lon)
+    id:s.stop_id,name:s.stop_name,lat:Number(s.stop_lat),lng:Number(s.stop_lon),
+    routes:[...(stopRouteIds.get(s.stop_id)||[])].map(id=>routeById.get(id)).filter(Boolean)
+      .map(r=>({id:r.route_id,number:routeNumber(r),name:r.route_long_name||"",color:r.route_color ? "#"+r.route_color.replace(/^#/,"") : null}))
+      .sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true}))
   })).filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lng));
   const shapePoints=new Map();
   for (const s of csv(texts["shapes.txt"])) {
