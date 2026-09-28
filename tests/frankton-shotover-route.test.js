@@ -3,17 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { prepareNetwork, findRoute } from '../public/src/routing/network.js';
 
-const SH6_SHOTOVER_BRIDGE = [168.75818, -45.00143];
 const FRANKTON = [168.7305316, -45.016644];
 const SHOTOVER_COUNTRY = [168.7732850, -45.0004865];
-
-function metres(a, b) {
-  const r = Math.PI / 180;
-  const h = Math.sin((b[1] - a[1]) * r / 2) ** 2 +
-    Math.cos(a[1] * r) * Math.cos(b[1] * r) *
-    Math.sin((b[0] - a[0]) * r / 2) ** 2;
-  return 12742000 * Math.asin(Math.min(1, Math.sqrt(h)));
-}
 
 test('usual cycling uses Twin Rivers and avoids SH6 Shotover bridge', () => {
   const data = JSON.parse(readFileSync(new URL('../public/data/cycle-network.v1.json', import.meta.url), 'utf8'));
@@ -28,11 +19,7 @@ test('usual cycling uses Twin Rivers and avoids SH6 Shotover bridge', () => {
     feature.properties.name || '',
     ...(feature.properties.networks || []),
   ]);
-  const closest = Math.min(...route.features.flatMap(feature =>
-    feature.geometry.coordinates.map(point => metres(point, SH6_SHOTOVER_BRIDGE))
-  ));
   console.log('ROUTE_DISTANCE_M', Math.round(route.metadata.distanceMetres));
-  console.log('CLOSEST_TO_SH6_M', Math.round(closest));
   for (const feature of route.features) {
     console.log('SECTION', JSON.stringify({
       name:feature.properties.name,
@@ -50,7 +37,11 @@ test('usual cycling uses Twin Rivers and avoids SH6 Shotover bridge', () => {
     'Expected the usual cycling route to use the Twin Rivers Trail connection'
   );
   assert.ok(
-    closest > 260,
-    `Usual cycling route came within ${Math.round(closest)} m of the SH6 Shotover bridge`
+    labels.some(label => /Historic Shotover Bridge/i.test(label)),
+    'Expected the usual cycling route to cross the Historic Shotover Bridge'
+  );
+  assert.ok(
+    !labels.some(label => /Frankton Ladies Mile Highway/i.test(label)),
+    'Usual cycling route must not use the Frankton Ladies Mile Highway / SH6 bridge'
   );
 });
