@@ -1,4 +1,4 @@
-const CACHE = "queenstown-shell-v01-18";
+const CACHE = "queenstown-shell-v01-19";
 const SHELL = [
   "/",
   "/index.html",
