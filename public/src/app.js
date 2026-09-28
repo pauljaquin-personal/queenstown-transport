@@ -219,21 +219,83 @@ $("#cycle-network-toggle").onchange = async event => {
   }
 };
 function renderCycleResult(route) {
-  const box = $("#cycle-results"); box.replaceChildren();
-  const m = route.metadata, km = value => value < 1000 ? Math.round(value) + " m" : (value / 1000).toFixed(1) + " km";
-  const title = document.createElement("h4"); title.textContent = `${km(m.distanceMetres)} · ${m.profile === "quiet" ? "Paths & quieter roads" : "Shorter route"}`;
-  const mix = document.createElement("p"); mix.textContent = `${km(m.totals.path)} paths/trails · ${km(m.totals.road)} roads · ${km(m.totals['walk-bike'])} walking bike.`;
-  box.append(title, mix);
-  if (m.totals.busy > 0) { const warning = document.createElement("p"); warning.className = "cycle-warning"; warning.textContent = `Includes ${km(m.totals.busy)} on busy or higher-speed roads. This is not a continuous protected cycle route. Select “Exclude busy roads” to search without these sections.`; box.append(warning); }
-  const surfaces = document.createElement("p"); surfaces.textContent = `${km(m.totals.unpaved)} unsealed or rough surface; ${km(m.totals.unknownSurface)} with surface unknown. Hills and gradients are not assessed.`;
-  const ends = document.createElement("p"); ends.textContent = `Start/finish are ${Math.round(m.snaps[0])} m / ${Math.round(m.snaps[1])} m from your selections. No access line from pins is included.`;
-  const date = document.createElement("p"); date.textContent = `OSM data: ${m.osmTimestamp.slice(0,10)}. Closures reviewed: ${m.reviewedAt}. Check current trail notices before riding.`;
-  if (new Date().toISOString().slice(0,10) > m.reviewAfter) date.textContent += " Closure review is due; this snapshot is not current advice.";
-  box.append(surfaces, ends, date);
-  const details = document.createElement("details"), summary = document.createElement("summary"), list = document.createElement("ol");
-  summary.textContent = "Route sections";
-  for (const f of route.features) { const item = document.createElement("li"); const p=f.properties; item.textContent = `${p.name} · ${km(p.metres)} · ${p.kind === 'walk-bike' ? 'walk bike' : p.busy ? 'busy road' : p.kind === 'road' ? 'road' : 'path/trail'}${p.networks.length ? ' · ' + p.networks.join(', ') : ''}`; list.append(item); }
-  details.append(summary, list); box.append(details);
+  const box = $("#cycle-results");
+  box.replaceChildren();
+
+  const m = route.metadata;
+  const km = value => value < 1000 ? Math.round(value) + " m" : (value / 1000).toFixed(1) + " km";
+
+  const summary = document.createElement("div");
+  summary.className = "route-result-summary";
+
+  const distance = document.createElement("div");
+  distance.className = "route-result-primary";
+  distance.innerHTML = `<span aria-hidden="true">📏</span><strong>${km(m.distanceMetres)}</strong>`;
+
+  const chips = document.createElement("div");
+  chips.className = "route-result-chips";
+
+  const items = [
+    ["🛤", km(m.totals.path), "Path or trail"],
+    ["🛣", km(m.totals.road), "Road"],
+    ["🚶", km(m.totals["walk-bike"]), "Walk bike"],
+  ];
+  if (m.totals.busy > 0) items.push(["⚠", km(m.totals.busy), "Busy road"]);
+  if (m.totals.unpaved > 0) items.push(["◌", km(m.totals.unpaved), "Unsealed or rough"]);
+
+  for (const [icon, value, label] of items) {
+    const chip = document.createElement("span");
+    chip.className = "route-result-chip";
+    chip.title = label;
+    chip.setAttribute("aria-label", `${label}: ${value}`);
+    chip.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${value}</strong>`;
+    chips.append(chip);
+  }
+
+  summary.append(distance, chips);
+  box.append(summary);
+
+  if (m.totals.busy > 0) {
+    const warning = document.createElement("div");
+    warning.className = "route-result-warning";
+    warning.innerHTML = `<span aria-hidden="true">⚠</span><span>Busy-road section included</span>`;
+    box.append(warning);
+  }
+
+  const details = document.createElement("details");
+  details.className = "route-result-details";
+  const detailsSummary = document.createElement("summary");
+  detailsSummary.textContent = "Details";
+
+  const meta = document.createElement("div");
+  meta.className = "route-result-meta";
+  meta.innerHTML = `
+    <p><span aria-hidden="true">📍</span> Start/end snap: ${Math.round(m.snaps[0])} m / ${Math.round(m.snaps[1])} m</p>
+    <p><span aria-hidden="true">◌</span> Unknown surface: ${km(m.totals.unknownSurface)}</p>
+    <p><span aria-hidden="true">🗓</span> OSM ${m.osmTimestamp.slice(0,10)} · closures ${m.reviewedAt}</p>
+    <p><span aria-hidden="true">⛰</span> Gradient not yet assessed</p>
+  `;
+  if (new Date().toISOString().slice(0,10) > m.reviewAfter) {
+    const stale = document.createElement("p");
+    stale.innerHTML = '<span aria-hidden="true">⚠</span> Closure review due';
+    meta.append(stale);
+  }
+
+  const sections = document.createElement("details");
+  sections.className = "route-sections";
+  const sectionsSummary = document.createElement("summary");
+  sectionsSummary.textContent = "Route sections";
+  const list = document.createElement("ol");
+  for (const feature of route.features) {
+    const item = document.createElement("li");
+    const p = feature.properties;
+    const kindIcon = p.kind === "walk-bike" ? "🚶" : p.busy ? "⚠" : p.kind === "road" ? "🛣" : "🛤";
+    item.textContent = `${kindIcon} ${p.name} · ${km(p.metres)}${p.networks.length ? " · " + p.networks.join(", ") : ""}`;
+    list.append(item);
+  }
+  sections.append(sectionsSummary, list);
+  details.append(detailsSummary, meta, sections);
+  box.append(details);
 }
 $("#test-cycle-route").onclick = async () => {
   const request = ++routeRequest;
