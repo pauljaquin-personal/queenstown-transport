@@ -251,7 +251,21 @@ $("#test-cycle-route").onclick = async () => {
 };
 $("#place").onchange = (event) => {
   const place = places.find((p) => p.id === event.target.value);
-  if (place) map.focus(place);
+  if (!place) return;
+  map.focus(place);
+  const destinationMap = {
+    town: "queenstown",
+    frankton: "frankton",
+    arrowtown: "arrowtown",
+    kelvin: "kelvin-heights",
+  };
+  const routeDestination = destinationMap[place.id];
+  if (routeDestination && $("#route-to").querySelector(`option[value="${routeDestination}"]`)) {
+    $("#route-to").value = routeDestination;
+    clearRoute();
+    $("#route-status").textContent = `${place.name} selected as your cycling destination. Choose a start point, then Find cycle route.`;
+    $("#route-to").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 };
 $("#reset").onclick = () => {
   map.reset();
@@ -267,6 +281,7 @@ $("#open-commute").onclick = async () => {
     toast("My Commute is temporarily unavailable. The map still works.");
   }
 };
+$("#open-report").onclick = () => $("#report-dialog").showModal();
 $("#about").onclick = () => $("#about-dialog").showModal();
 for (const close of document.querySelectorAll("[data-close]"))
   close.onclick = () => close.closest("dialog").close();
