@@ -227,7 +227,18 @@ export function createMap(onStatus) {
     const div=document.createElement("div");
     const strong=document.createElement("strong");
     strong.textContent=stop.name || "Orbus stop";
-    div.append(strong,document.createElement("br"));
+    div.append(strong);
+    if (Array.isArray(stop.routes) && stop.routes.length) {
+      div.append(document.createElement("br"),document.createTextNode("Routes: "));
+      stop.routes.forEach((route,index)=>{
+        if (index) div.append(document.createTextNode(" · "));
+        const badge=document.createElement("strong");
+        badge.textContent=route.number;
+        badge.title=route.name || ("Route "+route.number);
+        div.append(badge);
+      });
+    }
+    div.append(document.createElement("br"));
     const note=document.createElement("small");
     note.textContent="Official ORC GTFS stop · scheduled network data, not a live arrival.";
     div.append(note);
