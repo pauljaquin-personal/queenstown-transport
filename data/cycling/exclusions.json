@@ -1,7 +1,7 @@
 {
   "reviewedAt": "2026-09-28",
   "reviewAfter": "2026-10-05",
-  "blockedRelations": [14780154, 21321069, 21321215, 21320812, 21321106],
+  "blockedRelations": [14780154, 21321069, 21321215, 21321106],
   "blockedNamePatterns": ["Frankton Track", "Arrow River Bridges", "Lake[s]? Hayes Trail", "Bush Creek", "Lower Shotover Conservation", "Coronet Loop", "Shotover Gorge", "Hugo Tunnel", "Kimi-ākau"],
   "notices": [
     {"title": "Storm damage and closures", "text": "Official notices flag rain damage, Arrow River Bridges closure between Tobins Bridge and Whitechapel Road, the northern Lake Hayes bridge closure, flooding at Lower Shotover and a Bush Creek closure. Named closures are excluded conservatively, but open connecting trails remain routable where current official information confirms access.", "url": "https://queenstowntrails.org.nz/maps-and-trails/all-trails/"},
