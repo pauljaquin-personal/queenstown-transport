@@ -1449,3 +1449,16 @@ dialog label {
     min-height: 300px;
   }
 }
+
+
+@media (max-width: 760px) {
+  .route-preference {
+    order: 9;
+    margin-top: 5px;
+  }
+  .route-plan-button {
+    order: 10;
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+  }
+}
