@@ -1,6 +1,6 @@
 import { places, modes, CYCLE_PLACES as ROUTE_PLACES } from "./api/catalog.js";
 import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260929-1";
+import { createMap } from "./map/map.js?v=20260929-2";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
@@ -263,7 +263,7 @@ $("#cycle-network-toggle").onchange = async event => {
   if (!event.target.checked) { map.showCycleNetwork(null); $("#network-status").textContent = ""; return; }
   $("#network-status").textContent = "Loading available roads and paths…";
   try {
-    const { loadNetwork, networkOverlay } = await import("./routing/network.js?v=20260929-2");
+    const { loadNetwork, networkOverlay } = await import("./routing/network.js?v=20260929-3");
     const network = await loadNetwork();
     if (request !== overlayRequest) return;
     map.showCycleNetwork(networkOverlay(network));
@@ -469,7 +469,7 @@ async function planCycleRoute(profile = "quiet") {
 
   $("#route-status").textContent = "Finding a connected cycle route…";
   try {
-    const { loadNetwork, findRoute } = await import("./routing/network.js?v=20260929-2");
+    const { loadNetwork, findRoute } = await import("./routing/network.js?v=20260929-3");
     const network = await loadNetwork();
     if (request !== routeRequest) return;
     const point = id => id.startsWith("picked-") ? picked[id.slice(7)] : id.startsWith("location:") ? picked[id.slice(9)] : ROUTE_PLACES.find(p => p[0] === id)?.slice(2);
