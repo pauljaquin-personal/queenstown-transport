@@ -365,8 +365,8 @@ function renderCycleResult(route) {
   }
   sections.append(sectionsSummary, list);
   details.append(detailsSummary, meta, sections);
-  box.append(details);
   renderElevationProfile(route, box);
+  box.append(details);
 }
 $("#test-cycle-route").onclick = async () => {
   const request = ++routeRequest;
