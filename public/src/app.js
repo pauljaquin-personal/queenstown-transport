@@ -200,11 +200,6 @@ $("#route-to").onchange = () => {
   lastRouteTo = $("#route-to").value;
   clearRoute();
 };
-$("#route-variant").onchange = () => {
-  const legacy = !["quiet", "direct"].includes($("#route-variant").value);
-  $("#avoid-busy").disabled = legacy;
-  clearRoute();
-};
 $("#avoid-busy").onchange = clearRoute;
 const picked = {};
 let activePick = null;
