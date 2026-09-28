@@ -205,31 +205,35 @@ export function createMap(onStatus) {
       map.setView([-45.019, 168.714], 12);
     },
     locate() {
-      if (!navigator.geolocation) {
-        onStatus("Your browser does not support location.");
-        return;
-      }
-      onStatus("Finding your location…");
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          if (location) map.removeLayer(location);
-          location = L.circleMarker([coords.latitude, coords.longitude], {
-            radius: 8,
-            color: "#fff",
-            fillColor: "#2c6fc0",
-            fillOpacity: 1,
-          })
-            .bindPopup("Your location (not saved)")
-            .addTo(map);
-          map.setView([coords.latitude, coords.longitude], 14);
-          onStatus("Your location is approximate and is not saved.");
-        },
-        () =>
-          onStatus(
-            "Location unavailable or permission denied. Choose a place instead.",
-          ),
-        { timeout: 10000, maximumAge: 60000 },
-      );
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          onStatus("Your browser does not support location.");
+          reject(new Error("Geolocation unsupported"));
+          return;
+        }
+        onStatus("Finding your location…");
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            if (location) map.removeLayer(location);
+            location = L.circleMarker([coords.latitude, coords.longitude], {
+              radius: 8,
+              color: "#fff",
+              fillColor: "#2c6fc0",
+              fillOpacity: 1,
+            })
+              .bindPopup("Your location (not saved)")
+              .addTo(map);
+            map.setView([coords.latitude, coords.longitude], 14);
+            onStatus("Your location is approximate and is not saved.");
+            resolve([coords.longitude, coords.latitude]);
+          },
+          () => {
+            onStatus("Location unavailable or permission denied. Choose a place instead.");
+            reject(new Error("Location unavailable"));
+          },
+          { timeout: 10000, maximumAge: 60000 },
+        );
+      });
     },
   };
 }
