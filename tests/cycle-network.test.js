@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { classifyWay, blockedNode, metres } from '../public/src/routing/cycle-policy.js';
 import { prepareNetwork, findRoute, snapPoint, networkOverlay, loadNetwork } from '../public/src/routing/network.js';
 import { CYCLE_PLACES } from '../public/src/api/catalog.js';
+import { blockingTrailNoticeForWay } from '../public/src/routing/trail-notices.js';
 const road = (extra={}) => ({highway:'residential',...extra});
 test('eligibility rejects prohibited/private/technical/conditional routes and prefers bicycle-specific access',()=>{
  for(const tags of [road({access:'private'}),road({bicycle:'no'}),road({vehicle:'no'}),road({'bicycle:conditional':'yes @ (Mo-Fr)'}),road({motorroad:'yes'}),{highway:'construction'},{highway:'steps'},{highway:'motorway'},{highway:'path'},{highway:'cycleway','mtb:scale':'2'},{highway:'cycleway',smoothness:'horrible'}]) assert.equal(classifyWay(tags),null,JSON.stringify(tags));
@@ -53,9 +54,11 @@ test('does not join nearby disconnected networks and validates corrupt geometry'
 test('snapshot excludes reviewed closures; real routes remain contiguous and reversible',()=>{
  const data=JSON.parse(readFileSync(new URL('../public/data/cycle-network.v1.json',import.meta.url)));
  const n=prepareNetwork(data),p=Object.fromEntries(CYCLE_PLACES.map(([id,name,x,y])=>[id,[x,y]]));
- assert.ok(!data.ways.some(w=>/Frankton Track|Arrow River Bridges|Shotover Gorge|Hugo Tunnel|Twin Rivers|Lake[s]? Hayes Trail/i.test(w.name)));
+ const exclusions=JSON.parse(readFileSync(new URL('../data/cycling/exclusions.json',import.meta.url)));
+ assert.ok(!data.ways.some(w=>exclusions.blockedNamePatterns.some(pattern=>new RegExp(pattern,'i').test(w.name))));
  for(const [a,b] of [['queenstown','frankton'],['arthurs-point','arrowtown'],['shotover-country','lake-hayes-estate'],['hanleys-farm','frankton']])for(const [from,to] of [[a,b],[b,a]]){
   const r=findRoute(n,p[from],p[to]);assert.ok(r.features.length);assert.ok(r.metadata.distanceMetres>0);
+  assert.ok(r.features.every(f=>!blockingTrailNoticeForWay(f.properties)));
   for(let i=1;i<r.features.length;i++) assert.deepEqual(r.features[i-1].geometry.coordinates.at(-1),r.features[i].geometry.coordinates[0]);
  }
  const r=findRoute(n,p['arthurs-point'],p.arrowtown,{avoidBusy:true});assert.equal(r.metadata.totals.busy,0);assert.ok(r.features.some(f=>f.properties.networks.includes('Wharehuanui Trail')));

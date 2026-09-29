@@ -11,20 +11,15 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/buses" && request.method === "GET") {
-      const cache = caches.default;
-      const cacheKey = new Request(new URL("/api/buses", request.url), { method:"GET" });
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached;
       try {
         const data = await queenstownGtfs();
         const response = new Response(JSON.stringify({ ok:true, ...data }), {
           headers:{
             "content-type":"application/json; charset=utf-8",
-            "cache-control":"public, max-age=3600, s-maxage=21600",
+            "cache-control":"no-store",
             "x-content-type-options":"nosniff",
           },
         });
-        await cache.put(cacheKey, response.clone());
         return response;
       } catch (error) {
         console.warn("ORC GTFS unavailable", error);
