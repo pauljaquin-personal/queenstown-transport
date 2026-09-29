@@ -1,12 +1,13 @@
-const CACHE = "queenstown-shell-v01-36";
+const CACHE = "queenstown-shell-v01-37";
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
-  "/src/app.js?v=20260929-11",
-  "/src/api/catalog.js",
+  "/src/app.js?v=20260929-12",
+  "/src/api/catalog.js?v=20260929-12",
   "/src/api/reports.js",
-  "/src/map/map.js?v=20260929-11",
+  "/src/api/traffic-schema.js?v=20260929-12",
+  "/src/map/map.js?v=20260929-12",
   "/src/map/bus-popup.js?v=20260929-11",
   "/vendor/leaflet.js",
   "/vendor/leaflet.css",
@@ -16,6 +17,7 @@ const SHELL = [
   "/icons/icon-512.png",
 ];
 const OPTIONAL = [
+  "/src/community.js?v=20260929-12",
   "/src/routing/network.js?v=20260929-3",
   "/src/routing/cycle-policy.js?v=20260928-2",
   "/src/routing/trail-notices.js?v=20260929-1",

@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#173f36" />
     <meta
       name="description"
-      content="Explore Queenstown by road, bus, ferry and bike. Local transport links, map and private report drafts."
+      content="Explore Queenstown by road, bus, ferry and bike. Local transport links, bus timetables, cycling routes and community traffic reports."
     />
     <title>QueenstownGo</title>
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/vendor/leaflet.css" />
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/vendor/leaflet.js"></script>
-    <script type="module" src="/src/app.js?v=20260929-11"></script>
+    <script type="module" src="/src/app.js?v=20260929-12"></script>
   </head>
   <body>
     <a class="skip" href="#explore">Skip to transport information</a>
@@ -117,14 +117,21 @@
           <div class="section-heading compact-heading">
             <span class="eyebrow">COMMUNITY</span>
             <h2 id="community-title">Help improve local transport</h2>
-            <p>Share an approximate commute or keep a private note about a transport issue.</p>
+            <p>Report congestion, road obstructions or cycle-trail issues to help others plan their journey.</p>
           </div>
           <div class="community-actions">
-            <button id="open-commute" class="primary" type="button">Share my commute</button>
+            <button id="open-report" class="primary" type="button">Report a traffic problem</button>
+            <button id="view-community" type="button">View community reports</button>
+            <button id="open-commute" type="button">Share my commute</button>
             <a class="button-link" href="/insights.html">View commute insights</a>
-            <button id="open-report" type="button">Keep an issue draft</button>
           </div>
-          <p class="privacy-note">Commute summaries only show groups with at least 5 submissions. Issue drafts remain on this device.</p>
+          <p class="privacy-note">Traffic reports are shared publicly and are unverified. Commute summaries still require groups of at least 5.</p>
+          <details id="community-reports" open>
+            <summary>Recent community reports</summary>
+            <p id="community-report-status" role="status"></p>
+            <button id="refresh-community" type="button">Refresh reports</button>
+            <div id="community-report-list"></div>
+          </details>
         </section>
 
         <div class="panel-footer">
@@ -188,28 +195,23 @@
           <span class="eyebrow">COMMUNITY</span
           ><button type="button" data-close aria-label="Close">×</button>
         </div>
-        <h2>Keep a report draft</h2>
-        <p>
-          Private to this browser. Nothing is submitted or shared. Please stop
-          somewhere safe before writing.
-        </p>
-        <label for="report-place">Location</label
-        ><select id="report-place" required></select
-        ><label for="report-type">What did you notice?</label
-        ><select id="report-type">
-          <option>Road obstruction</option>
-          <option>Cycle path issue</option>
-          <option>Transport accessibility</option>
-          <option>Other</option></select
-        ><label for="report-note">Details</label
-        ><textarea
-          id="report-note"
-          maxlength="500"
-          required
-          placeholder="What and where? Avoid names or personal details."
-        ></textarea>
-        <p id="draft-status" role="status"></p>
-        <button class="primary" type="submit">Save private draft</button>
+        <h2>Report a traffic problem</h2>
+        <p>Share a problem you have seen with the community. Stop somewhere safe before writing. This is not sent to a council or emergency service.</p>
+        <label for="report-type">What did you notice?</label>
+        <select id="report-type" required></select>
+        <label for="report-place">Area</label>
+        <select id="report-place" required></select>
+        <label for="report-location">Road, trail or nearby landmark</label>
+        <input type="text" id="report-location" required minlength="3" maxlength="120" placeholder="e.g. Frankton Road near the marina">
+        <label for="report-when">When did you see it?</label>
+        <select id="report-when"><option value="0">Just now</option><option value="15">About 15 minutes ago</option><option value="60">About an hour ago</option></select>
+        <label for="report-note">What’s the problem?</label>
+        <textarea id="report-note" required minlength="5" maxlength="500" placeholder="e.g. Heavy queues towards town, or a fallen tree across the cycle trail. No names, number plates or personal details."></textarea>
+        <div class="report-honeypot" aria-hidden="true"><label for="report-website">Website</label><input id="report-website" tabindex="-1" autocomplete="off"></div>
+        <label class="report-consent"><input id="report-public" type="checkbox" required> I understand the location and details will be visible to everyone.</label>
+        <p id="report-expiry" class="privacy-note"></p>
+        <p id="report-status" role="status"></p>
+        <button class="primary" type="submit">Share community report</button>
       </form>
     </dialog>
     <dialog id="about-dialog">

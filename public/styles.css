@@ -1878,3 +1878,18 @@ dialog label {
   flex: none;
   font-size: 10px;
 }
+
+#community-reports { margin-top: 18px; }
+#community-reports summary { cursor: pointer; font-weight: 700; }
+#community-report-status { font-size: 12px; line-height: 1.5; }
+#community-report-list { max-height: 460px; overflow-y: auto; margin-top: 12px; }
+.community-report { padding: 14px 0; border-top: 1px solid #dce3d9; overflow-wrap: anywhere; }
+.community-report strong { font-size: 14px; }
+.community-report p { margin: 6px 0; font-size: 13px; line-height: 1.5; }
+.community-report small { display: block; color: #62756c; }
+.community-report button { margin-top: 8px; }
+#report-dialog .report-consent { display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+#report-public { width: auto; flex: 0 0 auto; margin-top: 3px; }
+.report-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+#report-location { width: 100%; min-height: 44px; padding: 12px; border: 1px solid #dce3da; border-radius: 9px; background: #fff; color: #25483d; font: inherit; }
+#report-location:focus-visible, #report-public:focus-visible { outline: 3px solid #c6802d; outline-offset: 3px; }

@@ -165,11 +165,11 @@ export const modes = [
     icon: "◇",
     color: "#8c719e",
     tint: "#f0eaf5",
-    subtitle: "Your private drafts",
-    status: "ON THIS DEVICE",
-    title: "Local knowledge starts here",
+    subtitle: "Traffic & trail reports",
+    status: "COMMUNITY REPORTS",
+    title: "Community traffic & trail reports",
     description:
-      "Keep a private note about a transport issue. Public reports and moderation will follow in a later version. Drafts are not sent to a council or emergency service.",
+      "Share congestion, road obstructions and cycle-trail issues. Reports are unverified and expire automatically. Map markers show approximate areas; read the road or trail description for the location.",
     links: [],
   },
 ];
