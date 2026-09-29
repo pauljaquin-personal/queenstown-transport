@@ -81,6 +81,7 @@ export async function queenstownGtfs() {
   const stopTimes=csv(texts["stop_times.txt"]).filter(s=>tripIds.has(s.trip_id));
   const stopIds=new Set(stopTimes.map(s=>s.stop_id));
   const tripRoute=new Map(trips.map(t=>[t.trip_id,t.route_id]));
+  const routeById=new Map(qRoutes.map(r=>[r.route_id,r]));
   const tripById=new Map(trips.map(t=>[t.trip_id,t]));
   const calendars=csv(texts["calendar.txt"]);
   const calendarDates=csv(texts["calendar_dates.txt"]);
@@ -128,7 +129,6 @@ export async function queenstownGtfs() {
     if (!stopRouteIds.has(s.stop_id)) stopRouteIds.set(s.stop_id,new Set());
     stopRouteIds.get(s.stop_id).add(routeId);
   }
-  const routeById=new Map(qRoutes.map(r=>[r.route_id,r]));
   const stops=csv(texts["stops.txt"]).filter(s=>stopIds.has(s.stop_id)).map(s=>({
     id:s.stop_id,name:s.stop_name,lat:Number(s.stop_lat),lng:Number(s.stop_lon),
     routes:[...(stopRouteIds.get(s.stop_id)||[])].map(id=>routeById.get(id)).filter(Boolean)
