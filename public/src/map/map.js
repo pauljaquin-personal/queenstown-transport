@@ -231,11 +231,13 @@ export function createMap(onStatus) {
     if (Array.isArray(stop.routes) && stop.routes.length) {
       div.append(document.createElement("br"),document.createTextNode("Routes: "));
       stop.routes.forEach((route,index)=>{
-        if (index) div.append(document.createTextNode(" · "));
+        if (index) div.append(document.createElement("br"));
+        const routeLine=document.createElement("span");
         const badge=document.createElement("strong");
         badge.textContent=route.number;
-        badge.title=route.name || ("Route "+route.number);
-        div.append(badge);
+        routeLine.append(badge);
+        if (route.name) routeLine.append(document.createTextNode("  "+route.name));
+        div.append(routeLine);
       });
     }
     div.append(document.createElement("br"));
