@@ -241,6 +241,22 @@ export function createMap(onStatus) {
       });
     }
     div.append(document.createElement("br"));
+    const departures=document.createElement("div");
+    const heading=document.createElement("strong");
+    heading.textContent="Next scheduled departures";
+    departures.append(document.createElement("br"),heading);
+    if (Array.isArray(stop.departures) && stop.departures.length) {
+      for (const departure of stop.departures) {
+        const line=document.createElement("div");
+        const time=document.createElement("strong");
+        time.textContent=departure.time.slice(0,5);
+        line.append(time,document.createTextNode(" · "+departure.route+(departure.destination ? " → "+departure.destination : "")));
+        departures.append(line);
+      }
+    } else {
+      departures.append(document.createElement("div"),document.createTextNode("No more scheduled departures today."));
+    }
+    div.append(departures,document.createElement("br"));
     const note=document.createElement("small");
     note.textContent="Official ORC GTFS stop · scheduled network data, not a live arrival.";
     div.append(note);
