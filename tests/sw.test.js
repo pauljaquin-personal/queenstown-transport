@@ -53,6 +53,7 @@ test("offline shell dependencies exist and external map tiles are excluded", asy
   for (const url of [
     "https://tile.openstreetmap.org/12/1/2.png",
     "https://qt.test/api/v1/layers/roads",
+    "https://qt.test/api/buses?v=2",
   ]) {
     let intercepted = false;
     h.handlers.fetch({
@@ -82,6 +83,8 @@ test('versioned entry points are precached exactly; routing remains optional', a
   const app=readFileSync(new URL('../public/src/app.js',import.meta.url),'utf8');
   assert.ok(h.shell.includes(html.match(/src="(\/src\/app.js[^\"]+)"/)[1]));
   assert.ok(h.shell.includes('/src/'+app.match(/from "\.\/(map\/map.js[^\"]+)"/)[1]));
+  const map=readFileSync(new URL('../public/src/map/map.js',import.meta.url),'utf8');
+  assert.ok(h.shell.includes('/src/map/'+map.match(/from "\.\/(bus-popup.js[^"]+)"/)[1]));
   assert.ok(!h.shell.some(p=>p.includes('routing') || p.includes('/data/')));
   let intercepted=false;
   h.handlers.fetch({request:{url:'https://qt.test/data/queenstown-frankton.v1.json',method:'GET'},respondWith(){intercepted=true;},waitUntil(){}});
@@ -110,7 +113,7 @@ test('cycle graph and engine remain optional, with offline fallback after visiti
   const h=harness(async()=>{throw Error('offline');});let promise;
   h.handlers.install({waitUntil:p=>promise=p});await promise;
   assert.ok(!h.shell.some(p=>p.includes('network.js') || p.includes('cycle-policy') || p.includes('cycle-network')));
-  for(const path of ['/src/routing/network.js?v=20260928-2','/src/routing/cycle-policy.js?v=20260928-2','/data/cycle-network.v1.json']){
+  for(const path of ['/src/routing/network.js?v=20260929-3','/src/routing/cycle-policy.js?v=20260928-2','/data/cycle-network.v1.json']){
     promise=undefined;
     h.handlers.fetch({request:{url:'https://qt.test'+path,method:'GET'},respondWith:p=>promise=p});
     assert.equal(await promise,h.cached);

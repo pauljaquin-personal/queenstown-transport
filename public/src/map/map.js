@@ -1,3 +1,4 @@
+import { busPopup } from "./bus-popup.js?v=20260929-11";
 import { places, modes } from "../api/catalog.js";
 import { TRAIL_NOTICES, trailNoticeForMapName } from "../routing/trail-notices.js?v=20260929-1";
 export const QLDC_TRAILS_URL = "https://gis.qldc.govt.nz/server/rest/services/OpenSpaces/Parks_VIEWER/MapServer/57/query?where=CYCLE%3D%2701%27%20AND%20ASSTAT%3D%2702%27&outFields=OBJECTID%2CTRAILNME%2CCYCLEGRADE%2CSURFACE%2CCYCLE%2COPSTAT%2CACTIVETRVL%2CSUBTYPE%2CLENGTHM%2CCONFID&returnGeometry=true&outSR=4326&f=geojson";
@@ -223,44 +224,17 @@ export function createMap(onStatus) {
   let busesLoaded = false;
   let busesLoading;
 
-  function busPopup(stop) {
-    const div=document.createElement("div");
-    const strong=document.createElement("strong");
-    strong.textContent=stop.name || "Orbus stop";
-    div.append(strong);
-    if (Array.isArray(stop.routes) && stop.routes.length) {
-      div.append(document.createElement("br"),document.createTextNode("Routes: "));
-      stop.routes.forEach((route,index)=>{
-        if (index) div.append(document.createElement("br"));
-        const routeLine=document.createElement("span");
-        const badge=document.createElement("strong");
-        badge.textContent=route.number;
-        routeLine.append(badge);
-        if (route.name) routeLine.append(document.createTextNode("  "+route.name));
-        div.append(routeLine);
-      });
-    }
-    div.append(document.createElement("br"));
-    const departures=document.createElement("div");
-    const heading=document.createElement("strong");
-    heading.textContent="Next scheduled departures";
-    departures.append(document.createElement("br"),heading);
-    if (Array.isArray(stop.departures) && stop.departures.length) {
-      for (const departure of stop.departures) {
-        const line=document.createElement("div");
-        const time=document.createElement("strong");
-        time.textContent=departure.time.slice(0,5);
-        line.append(time,document.createTextNode(" · "+departure.route+(departure.destination ? " → "+departure.destination : "")));
-        departures.append(line);
-      }
-    } else {
-      departures.append(document.createElement("div"),document.createTextNode("No more scheduled departures today."));
-    }
-    div.append(departures,document.createElement("br"));
-    const note=document.createElement("small");
-    note.textContent="Official ORC GTFS stop · scheduled network data, not a live arrival.";
-    div.append(note);
-    return div;
+  let departureRequest;
+  function loadDepartures() {
+    if (!departureRequest) departureRequest=(async()=>{
+      // Versioned URL bypasses previously deployed six-hour API cache entries.
+      const response=await fetch("/api/buses?v=2",{cache:"no-store",headers:{Accept:"application/json"},signal:AbortSignal.timeout(30000)});
+      if (!response.ok) throw Error("Bus API returned "+response.status);
+      const data=await response.json();
+      if (!data.ok || !Array.isArray(data.routes) || !Array.isArray(data.shapes) || !Array.isArray(data.stops)) throw Error("Unexpected bus response");
+      return data;
+    })().finally(()=>{departureRequest=null;});
+    return departureRequest;
   }
 
   async function ensureBuses() {
@@ -269,10 +243,7 @@ export function createMap(onStatus) {
     busesLoading=(async()=>{
       try {
         onStatus("Loading official Orbus routes & stops…");
-        const response=await fetch("/api/buses",{headers:{Accept:"application/json"}});
-        if (!response.ok) throw Error("Bus API returned "+response.status);
-        const data=await response.json();
-        if (!data.ok || !Array.isArray(data.shapes) || !Array.isArray(data.stops)) throw Error("Unexpected bus response");
+        const data=await loadDepartures();
         busRoutes=L.layerGroup();
         for (const shape of data.shapes) {
           if (!Array.isArray(shape.coordinates) || shape.coordinates.length<2) continue;
@@ -291,12 +262,31 @@ export function createMap(onStatus) {
         }
         busStops=L.layerGroup();
         for (const stop of data.stops) {
-          L.circleMarker([stop.lat,stop.lng],{
+          const marker=L.circleMarker([stop.lat,stop.lng],{
             radius:4,color:"#315c36",weight:2,fillColor:"#fff",fillOpacity:1
-          }).bindPopup(busPopup(stop)).addTo(busStops);
+          }).bindPopup(()=>busPopup(stop,{loading:true})).addTo(busStops);
+          let refreshTimer;
+          let generation=0;
+          marker.on("popupopen",()=>{
+            const current=++generation;
+            marker.setPopupContent(busPopup(stop,{loading:true}));
+            const refresh=async()=>{
+              try {
+                const fresh=await loadDepartures();
+                const updated=fresh.stops.find(s=>s.id===stop.id);
+                if (!updated) throw Error("Stop no longer in timetable");
+                if (generation===current && marker.isPopupOpen()) marker.setPopupContent(busPopup(updated));
+              } catch {
+                if (generation===current && marker.isPopupOpen()) marker.setPopupContent(busPopup(stop,{error:true}));
+              }
+            };
+            refresh();
+            refreshTimer=setInterval(refresh,30000);
+          });
+          marker.on("popupclose",()=>{generation++;clearInterval(refreshTimer);});
         }
         busesLoaded=true;
-        onStatus("Orbus scheduled network · "+data.routes.length+" Queenstown routes · "+data.stops.length+" stops");
+        onStatus("Orbus scheduled network · "+new Set(data.routes.map(route=>route.number)).size+" Queenstown routes · "+data.stops.length+" stops");
         return true;
       } catch (error) {
         console.warn("Orbus GTFS unavailable",error);
