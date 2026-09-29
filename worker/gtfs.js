@@ -67,7 +67,7 @@ export async function queenstownGtfs() {
   if (!upstream.ok) throw Error("ORC GTFS returned "+upstream.status);
   const buffer=await upstream.arrayBuffer();
   const entries=centralEntries(buffer);
-  const names=["agency.txt","routes.txt","trips.txt","stops.txt","stop_times.txt","shapes.txt","feed_info.txt"];
+  const names=["agency.txt","routes.txt","trips.txt","stops.txt","stop_times.txt","shapes.txt","feed_info.txt","calendar.txt","calendar_dates.txt"];
   const texts=Object.fromEntries(await Promise.all(names.map(async n=>[n,await unzipText(buffer,entries,n)])));
   const agencies=csv(texts["agency.txt"]);
   const routes=csv(texts["routes.txt"]);
@@ -81,6 +81,46 @@ export async function queenstownGtfs() {
   const stopTimes=csv(texts["stop_times.txt"]).filter(s=>tripIds.has(s.trip_id));
   const stopIds=new Set(stopTimes.map(s=>s.stop_id));
   const tripRoute=new Map(trips.map(t=>[t.trip_id,t.route_id]));
+  const tripById=new Map(trips.map(t=>[t.trip_id,t]));
+  const calendars=csv(texts["calendar.txt"]);
+  const calendarDates=csv(texts["calendar_dates.txt"]);
+  const calendarByService=new Map(calendars.map(row=>[row.service_id,row]));
+  const exceptionsByDate=new Map();
+  for (const row of calendarDates) {
+    if (!exceptionsByDate.has(row.date)) exceptionsByDate.set(row.date,new Map());
+    exceptionsByDate.get(row.date).set(row.service_id,row.exception_type);
+  }
+  function serviceRuns(serviceId,dateText,weekday) {
+    const exception=exceptionsByDate.get(dateText)?.get(serviceId);
+    if (exception==="1") return true;
+    if (exception==="2") return false;
+    const cal=calendarByService.get(serviceId);
+    if (!cal) return false;
+    return dateText>=cal.start_date && dateText<=cal.end_date && cal[weekday]==="1";
+  }
+  const weekdayNames=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+  const nowParts=new Intl.DateTimeFormat("en-NZ",{timeZone:"Pacific/Auckland",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23",weekday:"short"}).formatToParts(new Date());
+  const part=type=>nowParts.find(p=>p.type===type)?.value || "";
+  const today=part("year")+part("month")+part("day");
+  const weekday=({Sun:"sunday",Mon:"monday",Tue:"tuesday",Wed:"wednesday",Thu:"thursday",Fri:"friday",Sat:"saturday"})[part("weekday")];
+  const nowSeconds=Number(part("hour"))*3600+Number(part("minute"))*60+Number(part("second"));
+  const departureByStop=new Map();
+  for (const s of stopTimes) {
+    if (!s.departure_time || s.pickup_type==="1") continue;
+    const trip=tripById.get(s.trip_id);
+    if (!trip || !serviceRuns(trip.service_id,today,weekday)) continue;
+    const [h,m,sec]=s.departure_time.split(":").map(Number);
+    const departureSeconds=h*3600+m*60+sec;
+    if (departureSeconds < nowSeconds) continue;
+    const route=routeById.get(trip.route_id);
+    if (!route) continue;
+    if (!departureByStop.has(s.stop_id)) departureByStop.set(s.stop_id,[]);
+    departureByStop.get(s.stop_id).push({
+      time:s.departure_time,seconds:departureSeconds,route:routeNumber(route),
+      destination:s.stop_headsign || trip.trip_headsign || route.route_long_name || ""
+    });
+  }
+  for (const departures of departureByStop.values()) departures.sort((a,b)=>a.seconds-b.seconds);
   const stopRouteIds=new Map();
   for (const s of stopTimes) {
     const routeId=tripRoute.get(s.trip_id);
@@ -93,7 +133,8 @@ export async function queenstownGtfs() {
     id:s.stop_id,name:s.stop_name,lat:Number(s.stop_lat),lng:Number(s.stop_lon),
     routes:[...(stopRouteIds.get(s.stop_id)||[])].map(id=>routeById.get(id)).filter(Boolean)
       .map(r=>({id:r.route_id,number:routeNumber(r),name:r.route_long_name||"",color:r.route_color ? "#"+r.route_color.replace(/^#/,"") : null}))
-      .sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true}))
+      .sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true})),
+    departures:(departureByStop.get(s.stop_id)||[]).slice(0,5).map(({seconds,...departure})=>departure)
   })).filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lng));
   const shapePoints=new Map();
   for (const s of csv(texts["shapes.txt"])) {
