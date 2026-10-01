@@ -1,10 +1,12 @@
-import { places, modes, CYCLE_PLACES as ROUTE_PLACES } from "./api/catalog.js";
-import { readReports, saveReport, deleteReport } from "./api/reports.js";
-import { createMap } from "./map/map.js?v=20260929-11";
+import { places, modes, CYCLE_PLACES as ROUTE_PLACES } from "./api/catalog.js?v=20260929-12";
+import { readReports, deleteReport } from "./api/reports.js";
+import { createMap } from "./map/map.js?v=20260929-12";
 const $ = (s) => document.querySelector(s);
 const enabled = new Set(["buses", "ferries", "cycling"]);
 let selected = "buses";
 let deferredInstall;
+let publicReports=[];
+let community;
 
 
 const map = createMap((text) => ($("#map-status").textContent = text));
@@ -33,12 +35,6 @@ function toast(text) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => ($("#toast").textContent = ""), 5500);
 }
-for (const place of places) {
-  const reportOption = document.createElement("option");
-  reportOption.value = place.id;
-  reportOption.textContent = place.name;
-  $("#report-place").append(reportOption);
-}
 const locationFinishOption = document.createElement("option");
 locationFinishOption.value = "location:finish";
 locationFinishOption.textContent = "My location";
@@ -63,6 +59,10 @@ function createLayerRow(mode, compact = false) {
   button.onclick = () => {
     selected = mode.id;
     render();
+    if (mode.id === "community") {
+      $("#community-reports").open=true;
+      $(".community-section").scrollIntoView({behavior:"smooth",block:"start"});
+    }
   };
 
   const label = document.createElement("label");
@@ -102,7 +102,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setMapLayersOpen(false);
 });
 function render() {
-  map.render(enabled, readReports());
+  map.render(enabled, [...readReports(),...publicReports.map(r=>({...r,shared:true}))]);
   for (const row of document.querySelectorAll(".layer-row")) {
     const active = row.dataset.mode === selected;
     row.classList.toggle("active", active);
@@ -134,9 +134,10 @@ function render() {
   if (selected === "community") {
     const add = document.createElement("button");
     add.className = "primary";
-    add.textContent = "＋ Keep a private draft";
-    add.onclick = () => $("#report-dialog").showModal();
+    add.textContent = "Report a traffic problem";
+    add.onclick = () => community?.open();
     card.append(add);
+    card.append(document.createTextNode("Recent shared reports appear in the Community section below. Your older private drafts remain only on this device."));
     const reports = readReports();
     if (!reports.length) {
       const empty = document.createElement("p");
@@ -147,7 +148,7 @@ function render() {
       const article = document.createElement("article");
       article.className = "draft";
       const heading = document.createElement("strong");
-      heading.textContent = `${report.type} · ${places.find((p) => p.id === report.placeId)?.name || "Unknown place"}`;
+      heading.textContent = `Private draft: ${report.type} · ${places.find((p) => p.id === report.placeId)?.name || "Unknown place"}`;
       const note = document.createElement("p");
       note.textContent = report.note;
       const remove = document.createElement("button");
@@ -501,31 +502,19 @@ async function openCommute() {
 }
 $("#open-commute").onclick = openCommute;
 $("#open-commute-header").onclick = openCommute;
-$("#open-report").onclick = () => $("#report-dialog").showModal();
+async function loadCommunity() {
+  try {
+    const {initCommunity}=await import("./community.js?v=20260929-12");
+    community=initCommunity({toast,onReports:reports=>{publicReports=reports;if(enabled.has("community"))render();}});
+  } catch {
+    $("#community-report-status").textContent="Community reports are temporarily unavailable. Please reload to try again.";
+    $("#open-report").onclick=()=>toast("Community reports are unavailable. Please reload to try again.");
+  }
+}
+loadCommunity();
 $("#about").onclick = () => $("#about-dialog").showModal();
 for (const close of document.querySelectorAll("[data-close]"))
   close.onclick = () => close.closest("dialog").close();
-$("#report-form").onsubmit = (event) => {
-  event.preventDefault();
-  try {
-    saveReport({
-      placeId: $("#report-place").value,
-      type: $("#report-type").value,
-      note: $("#report-note").value,
-    });
-    $("#report-note").value = "";
-    $("#draft-status").textContent = "";
-    $("#report-dialog").close();
-    render();
-    toast("Draft saved on this device. It has not been submitted.");
-  } catch (error) {
-    $("#draft-status").textContent =
-      error.message.includes("characters") ||
-      error.message.includes("50 drafts")
-        ? error.message
-        : "Unable to save: browser storage is unavailable or full.";
-  }
-};
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;

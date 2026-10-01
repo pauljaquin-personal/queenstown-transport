@@ -119,3 +119,17 @@ test('cycle graph and engine remain optional, with offline fallback after visiti
     assert.equal(await promise,h.cached);
   }
 });
+
+test('community module has offline fallback while public reports never enter the shell cache',async()=>{
+ const h=harness(async()=>{throw Error('offline');});let promise;
+ h.handlers.install({waitUntil:p=>promise=p});await promise;
+ assert.ok(!h.shell.some(p=>p.includes('community.js')));
+ const app=readFileSync(new URL('../public/src/app.js',import.meta.url),'utf8');
+ const path='/src/'+app.match(/import\("\.\/(community.js[^\"]+)"\)/)[1];
+ h.handlers.fetch({request:{url:'https://qt.test'+path,method:'GET'},respondWith:p=>promise=p});
+ assert.equal(await promise,h.cached);
+ assert.ok(h.shell.includes('/src/api/traffic-schema.js?v=20260929-12'));
+ let intercepted=false;
+ h.handlers.fetch({request:{url:'https://qt.test/api/reports',method:'GET'},respondWith:()=>intercepted=true});
+ assert.equal(intercepted,false);
+});

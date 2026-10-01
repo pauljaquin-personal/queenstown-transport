@@ -1,5 +1,6 @@
+import { REPORT_AREAS, REPORT_TYPES } from "../api/traffic-schema.js?v=20260929-12";
 import { busPopup } from "./bus-popup.js?v=20260929-11";
-import { places, modes } from "../api/catalog.js";
+import { places, modes } from "../api/catalog.js?v=20260929-12";
 import { TRAIL_NOTICES, trailNoticeForMapName } from "../routing/trail-notices.js?v=20260929-1";
 export const QLDC_TRAILS_URL = "https://gis.qldc.govt.nz/server/rest/services/OpenSpaces/Parks_VIEWER/MapServer/57/query?where=CYCLE%3D%2701%27%20AND%20ASSTAT%3D%2702%27&outFields=OBJECTID%2CTRAILNME%2CCYCLEGRADE%2CSURFACE%2CCYCLE%2COPSTAT%2CACTIVETRVL%2CSUBTYPE%2CLENGTHM%2CCONFID&returnGeometry=true&outSR=4326&f=geojson";
 const NZTA_CLOSURES_URL = "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/1/query?where=impact%3D%27Road%20Closed%27&geometry=168.57%2C-45.13%2C169.04%2C-44.88&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&outSR=4326&f=geojson";
@@ -330,8 +331,10 @@ export function createMap(onStatus) {
       .bindPopup(popup(place.name, text))
       .addTo(markers);
   }
+  let renderGeneration=0;
   return {
     async render(enabled, reports) {
+      const currentRender=++renderGeneration;
       markers.clearLayers();
       for (const place of places) {
         const mode = modes.find(
@@ -375,14 +378,17 @@ export function createMap(onStatus) {
         if (ok && trailClosures && !map.hasLayer(trailClosures)) trailClosures.addTo(map);
       } else if (trailClosures && map.hasLayer(trailClosures)) map.removeLayer(trailClosures);
 
+      if (currentRender!==renderGeneration) return;
       if (enabled.has("community"))
         for (const report of reports) {
-          const place = places.find((p) => p.id === report.placeId);
+          if (report.shared && Date.parse(report.expiresAt)<=Date.now()) continue;
+          const area=REPORT_AREAS.find(([id])=>id===report.placeId);
+          const place = report.shared && area ? {name:area[1],lng:area[2],lat:area[3]} : places.find((p) => p.id === report.placeId);
           if (place)
             marker(
               place,
               "#8c719e",
-              `Private draft: ${report.type}. ${report.note}`,
+              report.shared ? `Unverified community report · approximate area: ${REPORT_TYPES[report.type]?.label || report.type}. ${report.location}. ${report.note}` : `Private draft: ${report.type}. ${report.note}`,
             );
         }
     },

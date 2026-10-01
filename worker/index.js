@@ -1,3 +1,4 @@
+import { trafficReports } from "./traffic-reports.js";
 import { validateCommute } from "./commutes.js";
 import { MIN_GROUP_SIZE, summariseModeRows, suppressSmallGroups } from "./summary.js";
 import { queenstownGtfs } from "./gtfs.js";
@@ -10,6 +11,7 @@ const json = (data, status=200) => new Response(JSON.stringify(data), {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/reports" || url.pathname.startsWith("/api/reports/")) return trafficReports(request,env);
     if (url.pathname === "/api/buses" && request.method === "GET") {
       try {
         const data = await queenstownGtfs();
