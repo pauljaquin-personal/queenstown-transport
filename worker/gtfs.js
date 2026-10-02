@@ -74,8 +74,8 @@ export async function readGtfs(buffer) {
     name, !entries.has(name) && OPTIONAL.has(name) ? [] : csv(await unzipText(buffer,entries,name))
   ])));
 }
-export async function queenstownGtfs() {
-  // Cache only the static feed, never the time-dependent departure response.
+export async function queenstownGtfsTables() {
+  // Cache only the static feed, never time-dependent journey or departure responses.
   if (!cachedTables || Date.now()-loadedAt >= 3600000) {
     if (!pending) pending=(async()=>{
       const upstream=await fetch(FEED_URL,{
@@ -88,7 +88,11 @@ export async function queenstownGtfs() {
     })().finally(()=>{pending=null;});
     await pending;
   }
-  return buildQueenstownGtfs(cachedTables,new Date());
+  return cachedTables;
+}
+
+export async function queenstownGtfs() {
+  return buildQueenstownGtfs(await queenstownGtfsTables(),new Date());
 }
 
 const ZONE="Pacific/Auckland";
