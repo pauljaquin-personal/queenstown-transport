@@ -6,7 +6,7 @@ QueenstownGo now has a backend journey-planning seam that can be connected to th
 
 The first planner returns scheduled:
 
-**walk → Orbus → walk**
+**walk → Orbus → walk** and **walk → Orbus → transfer → Orbus → walk**
 
 journeys between two Whakatipu coordinates.
 
@@ -16,7 +16,7 @@ It uses the same official Otago Regional Council static GTFS feed as the bus map
 - respects GTFS service calendars and date exceptions;
 - keeps Pacific/Auckland service-day handling, including 24+ hour GTFS times;
 - considers nearby origin and destination stops rather than requiring a stop to be selected manually;
-- will not join disconnected trips or reverse the order of stops on a trip;
+- supports direct journeys and one bus transfer, including a short walk between nearby interchange stops;\n- requires a minimum 3-minute interchange allowance and will not join disconnected trips or reverse the order of stops on a trip;
 - includes access/egress walking distance and scheduled boarding/alighting times;
 - currently searches up to 1.2 km of walking at each end and returns up to five earliest options.
 
