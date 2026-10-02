@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildBusJourneys } from "../worker/journeys.js";
+import { normaliseJourneyMode, cycleJourneyFromRoute } from "../public/src/routing/journeys.js";
 
 const baseCalendar = [{
   service_id:"daily", monday:"1", tuesday:"1", wednesday:"1", thursday:"1",
@@ -141,4 +142,32 @@ test("does not transfer onto the same trip occurrence", () => {
   );
   assert.equal(journeys.some((item) => item.transfers === 1), false);
   assert.equal(journeys[0].transfers, 0);
+});
+
+
+test("supports cycle, bus and all journey mode filters", () => {
+  assert.equal(normaliseJourneyMode("cycle"), "cycle");
+  assert.equal(normaliseJourneyMode("BUS"), "bus");
+  assert.equal(normaliseJourneyMode(), "all");
+  assert.throws(() => normaliseJourneyMode("ferry"), /Unknown journey mode/);
+});
+
+test("converts a cycle route into the shared journey result shape", () => {
+  const route = {
+    metadata: {
+      distanceMetres:8000,
+      profile:"quiet",
+      avoidBusy:false,
+      totals:{path:6000,road:2000,"walk-bike":0,busy:0},
+      snaps:[12,18],
+    },
+    features:[],
+  };
+  const now = new Date("2026-10-03T00:00:00.000Z");
+  const journey = cycleJourneyFromRoute(route,{cyclingSpeedKph:16,now});
+  assert.equal(journey.mode,"cycle");
+  assert.equal(journey.transfers,0);
+  assert.equal(journey.distanceMetres,8000);
+  assert.equal(journey.totalMinutes,30);
+  assert.equal(journey.arrivalAt,"2026-10-03T00:30:00.000Z");
 });
