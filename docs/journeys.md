@@ -31,7 +31,8 @@ The response contains a `journeys` array. Each journey includes the bus route, b
 ## Next steps
 
 1. Verify representative Queenstown, Frankton, Arrowtown, Shotover Country and Kelvin Heights journeys against the published Orbus timetable.
-2. Add one-transfer bus journeys.
-3. Bring the existing cycle route engine into the same journey-result model.
+2. Tune transfer assumptions and interchange walking around real Queenstown hubs.
+3. Continue the shared journey model for cycling, bus-only and cross-mode comparison.
 4. Add realtime information when a reliable public source is available.
 5. Connect the planner to the post-Swimspots QueenstownGo mobile UI rather than adding another temporary interface now.
+6. Develop car share as a future journey mode. Initial scope should consider opt-in trip offers/requests, coarse pickup areas, time windows, seat availability, privacy and moderation before any matching or live-location features. Car share should remain distinct from private driving and from commercial ride-hailing.
