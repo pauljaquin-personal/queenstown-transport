@@ -90,12 +90,52 @@ function walkingSeconds(distance, speed) {
   return Math.ceil(distance / speed);
 }
 
+function lowerBound(events, earliestMs) {
+  let low = 0;
+  let high = events.length;
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (events[mid].departureMs < earliestMs) low = mid + 1;
+    else high = mid;
+  }
+  return low;
+}
+
+function leg(routeById, trip, boardRow, alightRow, departureMs, arrivalMs) {
+  const route = routeById.get(trip.route_id);
+  return {
+    mode: "bus",
+    route: routeNumber(route),
+    routeName: route?.route_long_name || "",
+    tripId: trip.trip_id,
+    destination: boardRow.stop_headsign || trip.trip_headsign || route?.route_long_name || "",
+    boardStopId: boardRow.stop_id,
+    alightStopId: alightRow.stop_id,
+    departureAt: new Date(departureMs).toISOString(),
+    arrivalAt: new Date(arrivalMs).toISOString(),
+    transitMinutes: Math.max(1, Math.round((arrivalMs - departureMs) / 60000)),
+  };
+}
+
+function journeySort(a, b) {
+  return Date.parse(a.arrivalAt) - Date.parse(b.arrivalAt) ||
+    a.transfers - b.transfers ||
+    a.walkMetres - b.walkMetres;
+}
+
 export function buildBusJourneys(
   tables,
   from,
   to,
   now = new Date(),
-  { maxWalkMetres = 1200, walkingSpeedMps = 1.35, candidateLimit = 8, resultLimit = 5 } = {}
+  {
+    maxWalkMetres = 1200,
+    walkingSpeedMps = 1.35,
+    candidateLimit = 8,
+    resultLimit = 5,
+    maxTransferWalkMetres = 250,
+    minTransferMinutes = 3,
+  } = {}
 ) {
   if (!Array.isArray(from) || !Array.isArray(to) || from.length !== 2 || to.length !== 2 ||
       !from.every(Number.isFinite) || !to.every(Number.isFinite)) throw Error("Invalid journey points");
@@ -114,6 +154,7 @@ export function buildBusJourneys(
       Number.isFinite(Number(stop.stop_lat)) &&
       Number.isFinite(Number(stop.stop_lon))
   );
+  const stopById = new Map(stops.map((stop) => [stop.stop_id, stop]));
 
   const fromStops = candidateStops(stops, from, maxWalkMetres, candidateLimit);
   const toStops = candidateStops(stops, to, maxWalkMetres, candidateLimit);
@@ -130,13 +171,26 @@ export function buildBusJourneys(
     rows.sort((a, b) => Number(a.stop_sequence) - Number(b.stop_sequence));
   }
 
+  const transferStops = new Map();
+  for (const stop of stops) {
+    const point = [Number(stop.stop_lon), Number(stop.stop_lat)];
+    transferStops.set(stop.stop_id, stops
+      .map((other) => ({
+        stop: other,
+        distance: metres(point, [Number(other.stop_lon), Number(other.stop_lat)]),
+      }))
+      .filter((item) => item.distance <= maxTransferWalkMetres)
+      .sort((a, b) => a.distance - b.distance));
+  }
+
   const serviceRuns = calendarResolver(tables);
   const weekdayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const p = localParts(now);
   const dateUTC = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day));
   const nowMs = now.getTime();
   const horizon = nowMs + 7 * 86400000;
-  const options = [];
+  const occurrences = [];
+  const departuresByStop = new Map();
 
   for (let offset = -1; offset <= 7; offset++) {
     const date = new Date(dateUTC + offset * 86400000);
@@ -146,70 +200,166 @@ export function buildBusJourneys(
 
     for (const trip of trips) {
       if (!serviceRuns(trip.service_id, dateText, weekday)) continue;
-      const rows = rowsByTrip.get(trip.trip_id) || [];
-      for (let i = 0; i < rows.length - 1; i++) {
-        const board = fromById.get(rows[i].stop_id);
-        if (!board || rows[i].pickup_type === "1") continue;
-        const departSeconds = parseTime(rows[i].departure_time);
-        if (departSeconds === null) continue;
-        const departureMs = start + departSeconds * 1000;
-        const accessSeconds = walkingSeconds(board.distance, walkingSpeedMps);
-        if (departureMs < nowMs + accessSeconds * 1000 || departureMs > horizon) continue;
+      const sourceRows = rowsByTrip.get(trip.trip_id) || [];
+      const rows = sourceRows.map((row) => {
+        const arrivalSeconds = parseTime(row.arrival_time || row.departure_time);
+        const departureSeconds = parseTime(row.departure_time || row.arrival_time);
+        return {
+          ...row,
+          arrivalMs: arrivalSeconds === null ? null : start + arrivalSeconds * 1000,
+          departureMs: departureSeconds === null ? null : start + departureSeconds * 1000,
+        };
+      });
+      const occurrence = { key: trip.trip_id + ":" + dateText, trip, rows };
+      occurrences.push(occurrence);
+      rows.forEach((row, index) => {
+        if (row.departureMs === null || row.departureMs < nowMs || row.departureMs > horizon || row.pickup_type === "1") return;
+        if (!departuresByStop.has(row.stop_id)) departuresByStop.set(row.stop_id, []);
+        departuresByStop.get(row.stop_id).push({ occurrence, index, departureMs: row.departureMs });
+      });
+    }
+  }
+  for (const events of departuresByStop.values()) events.sort((a, b) => a.departureMs - b.departureMs);
 
-        for (let j = i + 1; j < rows.length; j++) {
-          const alight = toById.get(rows[j].stop_id);
-          if (!alight || rows[j].drop_off_type === "1") continue;
-          const arrivalSeconds = parseTime(rows[j].arrival_time || rows[j].departure_time);
-          if (arrivalSeconds === null || arrivalSeconds < departSeconds) continue;
-          const arrivalMs = start + arrivalSeconds * 1000;
-          const egressSeconds = walkingSeconds(alight.distance, walkingSpeedMps);
-          const finalArrivalMs = arrivalMs + egressSeconds * 1000;
-          if (finalArrivalMs > horizon) continue;
+  const options = [];
+  const minTransferMs = minTransferMinutes * 60000;
 
-          const route = routeById.get(trip.route_id);
-          options.push({
-            mode: "bus",
-            route: routeNumber(route),
-            routeName: route?.route_long_name || "",
-            tripId: trip.trip_id,
-            destination: rows[i].stop_headsign || trip.trip_headsign || route?.route_long_name || "",
-            board: {
-              stopId: board.stop.stop_id,
-              name: board.stop.stop_name,
-              walkMetres: Math.round(board.distance),
-              walkMinutes: Math.max(1, Math.ceil(accessSeconds / 60)),
-              scheduledAt: new Date(departureMs).toISOString(),
-            },
-            alight: {
-              stopId: alight.stop.stop_id,
-              name: alight.stop.stop_name,
-              walkMetres: Math.round(alight.distance),
-              walkMinutes: Math.max(1, Math.ceil(egressSeconds / 60)),
-              scheduledAt: new Date(arrivalMs).toISOString(),
-            },
-            departureAt: new Date(departureMs).toISOString(),
-            arrivalAt: new Date(finalArrivalMs).toISOString(),
-            transitMinutes: Math.max(1, Math.round((arrivalMs - departureMs) / 60000)),
-            totalMinutes: Math.max(1, Math.ceil((finalArrivalMs - nowMs) / 60000)),
-          });
-          break;
+  for (const first of occurrences) {
+    const rows = first.rows;
+    for (let i = 0; i < rows.length - 1; i++) {
+      const board = fromById.get(rows[i].stop_id);
+      if (!board || rows[i].departureMs === null || rows[i].pickup_type === "1") continue;
+      const accessSeconds = walkingSeconds(board.distance, walkingSpeedMps);
+      if (rows[i].departureMs < nowMs + accessSeconds * 1000 || rows[i].departureMs > horizon) continue;
+
+      for (let j = i + 1; j < rows.length; j++) {
+        if (rows[j].arrivalMs === null || rows[j].arrivalMs < rows[i].departureMs || rows[j].drop_off_type === "1") continue;
+
+        const destination = toById.get(rows[j].stop_id);
+        if (destination) {
+          const egressSeconds = walkingSeconds(destination.distance, walkingSpeedMps);
+          const finalArrivalMs = rows[j].arrivalMs + egressSeconds * 1000;
+          if (finalArrivalMs <= horizon) {
+            const firstLeg = leg(routeById, first.trip, rows[i], rows[j], rows[i].departureMs, rows[j].arrivalMs);
+            options.push({
+              mode: "bus",
+              transfers: 0,
+              route: firstLeg.route,
+              routeName: firstLeg.routeName,
+              tripId: firstLeg.tripId,
+              destination: firstLeg.destination,
+              legs: [firstLeg],
+              board: {
+                stopId: board.stop.stop_id,
+                name: board.stop.stop_name,
+                walkMetres: Math.round(board.distance),
+                walkMinutes: Math.max(1, Math.ceil(accessSeconds / 60)),
+                scheduledAt: firstLeg.departureAt,
+              },
+              alight: {
+                stopId: destination.stop.stop_id,
+                name: destination.stop.stop_name,
+                walkMetres: Math.round(destination.distance),
+                walkMinutes: Math.max(1, Math.ceil(egressSeconds / 60)),
+                scheduledAt: firstLeg.arrivalAt,
+              },
+              departureAt: firstLeg.departureAt,
+              arrivalAt: new Date(finalArrivalMs).toISOString(),
+              transitMinutes: firstLeg.transitMinutes,
+              transferMinutes: 0,
+              walkMetres: Math.round(board.distance + destination.distance),
+              totalMinutes: Math.max(1, Math.ceil((finalArrivalMs - nowMs) / 60000)),
+            });
+          }
+        }
+
+        for (const transfer of transferStops.get(rows[j].stop_id) || []) {
+          const walkSeconds = walkingSeconds(transfer.distance, walkingSpeedMps);
+          const earliestSecond = rows[j].arrivalMs + walkSeconds * 1000 + minTransferMs;
+          const events = departuresByStop.get(transfer.stop.stop_id) || [];
+          for (let e = lowerBound(events, earliestSecond); e < events.length; e++) {
+            const event = events[e];
+            if (event.departureMs > rows[j].arrivalMs + 90 * 60000) break;
+            if (event.occurrence.key === first.key) continue;
+            const secondRows = event.occurrence.rows;
+            let completed = false;
+            for (let k = event.index + 1; k < secondRows.length; k++) {
+              const secondDestination = toById.get(secondRows[k].stop_id);
+              if (!secondDestination || secondRows[k].arrivalMs === null || secondRows[k].drop_off_type === "1") continue;
+              const egressSeconds = walkingSeconds(secondDestination.distance, walkingSpeedMps);
+              const finalArrivalMs = secondRows[k].arrivalMs + egressSeconds * 1000;
+              if (finalArrivalMs > horizon) continue;
+
+              const firstLeg = leg(routeById, first.trip, rows[i], rows[j], rows[i].departureMs, rows[j].arrivalMs);
+              const secondLeg = leg(
+                routeById,
+                event.occurrence.trip,
+                secondRows[event.index],
+                secondRows[k],
+                event.departureMs,
+                secondRows[k].arrivalMs
+              );
+              const transferMinutes = Math.max(
+                minTransferMinutes,
+                Math.round((event.departureMs - rows[j].arrivalMs) / 60000)
+              );
+              options.push({
+                mode: "bus",
+                transfers: 1,
+                route: firstLeg.route + " → " + secondLeg.route,
+                routeName: firstLeg.routeName + " → " + secondLeg.routeName,
+                tripId: firstLeg.tripId + "+" + secondLeg.tripId,
+                destination: secondLeg.destination,
+                legs: [firstLeg, secondLeg],
+                board: {
+                  stopId: board.stop.stop_id,
+                  name: board.stop.stop_name,
+                  walkMetres: Math.round(board.distance),
+                  walkMinutes: Math.max(1, Math.ceil(accessSeconds / 60)),
+                  scheduledAt: firstLeg.departureAt,
+                },
+                transfer: {
+                  fromStopId: rows[j].stop_id,
+                  fromName: stopById.get(rows[j].stop_id)?.stop_name || rows[j].stop_id,
+                  toStopId: transfer.stop.stop_id,
+                  toName: transfer.stop.stop_name,
+                  walkMetres: Math.round(transfer.distance),
+                  walkMinutes: transfer.distance > 5 ? Math.max(1, Math.ceil(walkSeconds / 60)) : 0,
+                  minimumMinutes: minTransferMinutes,
+                  scheduledWaitMinutes: transferMinutes,
+                },
+                alight: {
+                  stopId: secondDestination.stop.stop_id,
+                  name: secondDestination.stop.stop_name,
+                  walkMetres: Math.round(secondDestination.distance),
+                  walkMinutes: Math.max(1, Math.ceil(egressSeconds / 60)),
+                  scheduledAt: secondLeg.arrivalAt,
+                },
+                departureAt: firstLeg.departureAt,
+                arrivalAt: new Date(finalArrivalMs).toISOString(),
+                transitMinutes: firstLeg.transitMinutes + secondLeg.transitMinutes,
+                transferMinutes,
+                walkMetres: Math.round(board.distance + transfer.distance + secondDestination.distance),
+                totalMinutes: Math.max(1, Math.ceil((finalArrivalMs - nowMs) / 60000)),
+              });
+              completed = true;
+              break;
+            }
+            if (completed) break;
+          }
         }
       }
     }
   }
 
-  const bestByTrip = new Map();
+  const bestByPattern = new Map();
   for (const option of options) {
-    const key = option.tripId + ":" + option.board.stopId + ":" + option.alight.stopId;
-    const previous = bestByTrip.get(key);
-    if (!previous || option.arrivalAt < previous.arrivalAt) bestByTrip.set(key, option);
+    const legKey = option.legs.map((item) => item.tripId + ":" + item.boardStopId + ":" + item.alightStopId).join("|");
+    const previous = bestByPattern.get(legKey);
+    if (!previous || journeySort(option, previous) < 0) bestByPattern.set(legKey, option);
   }
-  return [...bestByTrip.values()]
-    .sort((a, b) =>
-      Date.parse(a.arrivalAt) - Date.parse(b.arrivalAt) ||
-      (a.board.walkMetres + a.alight.walkMetres) - (b.board.walkMetres + b.alight.walkMetres)
-    )
-    .slice(0, resultLimit);
+
+  return [...bestByPattern.values()].sort(journeySort).slice(0, resultLimit);
 }
 
 export async function queenstownBusJourneys(from, to, now = new Date()) {
