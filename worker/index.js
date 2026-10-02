@@ -2,6 +2,7 @@ import { trafficReports } from "./traffic-reports.js";
 import { validateCommute } from "./commutes.js";
 import { MIN_GROUP_SIZE, summariseModeRows, suppressSmallGroups } from "./summary.js";
 import { queenstownGtfs } from "./gtfs.js";
+import { queenstownBusJourneys } from "./journeys.js";
 
 const json = (data, status=200) => new Response(JSON.stringify(data), {
   status,
@@ -26,6 +27,31 @@ export default {
       } catch (error) {
         console.warn("ORC GTFS unavailable", error);
         return json({ ok:false, error:"Bus network temporarily unavailable." }, 502);
+      }
+    }
+    if (url.pathname === "/api/journeys" && request.method === "GET") {
+      const parsePoint = (value) => {
+        const parts = String(value || "").split(",").map(Number);
+        if (parts.length !== 2 || !parts.every(Number.isFinite)) return null;
+        const [lng,lat] = parts;
+        if (lng < 168.55 || lng > 169.06 || lat < -45.15 || lat > -44.86) return null;
+        return [lng,lat];
+      };
+      const from = parsePoint(url.searchParams.get("from"));
+      const to = parsePoint(url.searchParams.get("to"));
+      if (!from || !to) return json({ ok:false, error:"Provide from=lng,lat and to=lng,lat within Whakatipu." }, 400);
+      try {
+        const journeys = await queenstownBusJourneys(from,to);
+        return json({
+          ok:true,
+          generatedAt:new Date().toISOString(),
+          timeZone:"Pacific/Auckland",
+          modes:["walk","bus","walk"],
+          journeys,
+        });
+      } catch (error) {
+        console.warn("Journey planning unavailable", error);
+        return json({ ok:false, error:"Journey planning temporarily unavailable." }, 502);
       }
     }
     if (url.pathname === "/api/elevation" && request.method === "POST") {
