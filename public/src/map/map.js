@@ -27,8 +27,10 @@ export function createMap(onStatus) {
       pickCyclePoint() { onStatus("Map picking is unavailable. Choose a named area instead."); },
       focus() {},
       reset() {},
+      clearLocation() {},
       locate() {
         onStatus("Location is unavailable without the map.");
+        return Promise.reject(new Error("Geolocation unavailable"));
       },
     };
   }
@@ -455,11 +457,20 @@ export function createMap(onStatus) {
     reset() {
       map.setView([-45.019, 168.714], 12);
     },
+    clearLocation() {
+      if (location) {
+        map.removeLayer(location);
+        location = null;
+      }
+      onStatus("");
+    },
     locate() {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-          onStatus("Your browser does not support location.");
-          reject(new Error("Geolocation unsupported"));
+          const error = new Error("Your browser does not support location.");
+          error.code = 0;
+          onStatus(error.message);
+          reject(error);
           return;
         }
         onStatus("Finding your location…");
@@ -478,11 +489,21 @@ export function createMap(onStatus) {
             onStatus("Your location is approximate and is not saved.");
             resolve([coords.longitude, coords.latitude]);
           },
-          () => {
-            onStatus("Location unavailable or permission denied. Choose a place instead.");
-            reject(new Error("Location unavailable"));
+          (geoError) => {
+            let message = "Could not get your location. Tap ◎ to retry.";
+            if (geoError.code === geoError.PERMISSION_DENIED) {
+              message = "Location access was denied. Enable location for QueenstownGo, then tap ◎ to retry.";
+            } else if (geoError.code === geoError.POSITION_UNAVAILABLE) {
+              message = "Your location is temporarily unavailable. Tap ◎ to retry.";
+            } else if (geoError.code === geoError.TIMEOUT) {
+              message = "Location request timed out. Tap ◎ to try again.";
+            }
+            onStatus(message);
+            const error = new Error(message);
+            error.code = geoError.code;
+            reject(error);
           },
-          { timeout: 10000, maximumAge: 60000 },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
         );
       });
     },
