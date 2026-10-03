@@ -217,9 +217,10 @@ async function useMyLocation(label, selector, restoreValue = "") {
     if (label === "finish") lastRouteTo = value;
     $("#pick-status").textContent = "";
     clearRoute();
-  } catch {
+  } catch (error) {
     $(selector).value = restoreValue;
-    $("#pick-status").textContent = "Location unavailable. Choose a place or pick on map.";
+    $("#pick-status").textContent =
+      error?.message || "Could not get your location. Choose a place or pick on map.";
   }
 }
 
@@ -490,7 +491,33 @@ async function planCycleRoute(profile = "quiet") {
   }
 }
 $("#test-cycle-route").onclick = () => planCycleRoute("quiet");
-$("#locate").onclick = () => map.locate().catch(() => {});
+let mapLocationActive = false;
+$("#locate").setAttribute("aria-pressed", "false");
+$("#locate").onclick = async () => {
+  const button = $("#locate");
+  if (mapLocationActive) {
+    map.clearLocation();
+    mapLocationActive = false;
+    button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-label", "Show my location");
+    button.title = "My location";
+    $("#map-status").textContent = "Location cleared. Tap ◎ to locate again.";
+    return;
+  }
+  button.disabled = true;
+  try {
+    await map.locate();
+    mapLocationActive = true;
+    button.setAttribute("aria-pressed", "true");
+    button.setAttribute("aria-label", "Clear my location");
+    button.title = "Clear my location";
+  } catch {
+    mapLocationActive = false;
+    button.setAttribute("aria-pressed", "false");
+  } finally {
+    button.disabled = false;
+  }
+};
 async function openCommute() {
   try {
     const { openCommuteDialog } = await import("./commute.js?v=20260924-1");
